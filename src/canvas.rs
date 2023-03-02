@@ -1,6 +1,4 @@
-use bevy_time::{
-    Time, Timer, TimerMode
-};
+use bevy_time::{Time, Timer, TimerMode};
 use std::time::Duration;
 
 use macroquad::prelude::*;
@@ -35,6 +33,10 @@ impl Canvas {
 
     pub fn size(&self) -> (u64, u64) {
         self.size
+    }
+
+    pub fn size_vec2(&self) -> Vec2 {
+        vec2(self.width() as f32, self.height() as f32)
     }
 
     pub fn set_size(&mut self, size: (u64, u64)) {

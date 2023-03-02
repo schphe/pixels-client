@@ -2,6 +2,7 @@ use macroquad::color::Color;
 use bevy_ecs::prelude::*;
 use serde_json::json;
 use std::io::Read;
+use crate::util;
 
 #[derive(Resource)]
 pub struct Client {
@@ -39,17 +40,11 @@ impl Client {
     }
 
     pub fn canvas_set_pixel(&self, x: u64, y: u64, color: Color) -> Result<(), ureq::Error> {
-        println!("{}, {}", x, y);
         let body: serde_json::Value = ureq::put("https://pixels.yazilimcilarinmolayeri.com/canvas/pixel")
             .send_json(json!({
                 "x": x,
                 "y": y,
-                "rgb": format!(
-                    "{:02x}{:02x}{:02x}",
-                    (color.r*255.0) as u8,
-                    (color.g*255.0) as u8,
-                    (color.b*255.0) as u8
-                )
+                "rgb": util::color_to_hex(color)
             }))?.into_json()?;
         Ok(())
     }

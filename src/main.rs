@@ -4,13 +4,13 @@ use std::time::Duration;
 use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
 use clap::Parser;
-use macroquad::prelude::scene::camera_pos;
 
 use canvas::Canvas;
 use client::Client;
 
 mod canvas;
 mod client;
+mod util;
 
 #[derive(Parser)]
 pub struct Args {
@@ -107,9 +107,7 @@ pub fn update_input(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<C
             vec2(mouse_position().0, mouse_position().1)
         );
 
-        let color = Color::new(
-            state.color[0], state.color[1], state.color[2], 1.0,
-        );
+        let color = util::rgb_to_color(state.color);
         canvas.set_pixel(pos.x as u64, pos.y as u64, color);
         if let Err(_) = client.canvas_set_pixel(pos.x as u64, pos.y as u64, color) {
             println!("couldn't set pixel");
@@ -119,11 +117,8 @@ pub fn update_input(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<C
 
 pub fn update_camera(mut state: ResMut<State>, canvas: Res<Canvas>) {
     state.camera = Camera2D {
-        target: vec2((canvas.width()/2) as f32, (canvas.height()/2) as f32),
-        zoom: vec2(
-            1.0 / screen_width() as f32 * 2.0 * state.zoom,
-            -1.0 / screen_height() as f32 * 2.0 * state.zoom,
-        ),
+        target: canvas.size_vec2() / vec2(2.0, 2.0),
+        zoom: util::calculate_zoom(state.zoom),
         ..Default::default()
     };
     set_camera(&state.camera);
