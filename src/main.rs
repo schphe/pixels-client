@@ -102,7 +102,7 @@ pub fn update_time(mut time: ResMut<Time>) {
 }
 
 pub fn update_input(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
-    if is_mouse_button_pressed(MouseButton::Left) {
+    if is_mouse_button_pressed(MouseButton::Left) && is_key_down(KeyCode::C) {
         let pos = state.camera.screen_to_world(
             vec2(mouse_position().0, mouse_position().1)
         );
