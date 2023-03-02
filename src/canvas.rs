@@ -5,6 +5,7 @@ use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
 
 use crate::client::Client;
+use crate::util;
 
 #[derive(Resource)]
 pub struct Canvas {
@@ -59,9 +60,10 @@ impl Canvas {
 
     pub fn set_pixel(&mut self, x: u64, y: u64, color: Color) {
         let pos = self.array_position(x, y);
-        self.data[pos] = (color.r * 255.0) as u8;
-        self.data[pos+1] = (color.g * 255.0) as u8;
-        self.data[pos+2] = (color.b * 255.0) as u8;
+        let color = util::color_to_rgb_u8(color);
+        self.data[pos] = color[0];
+        self.data[pos+1] = color[1];
+        self.data[pos+2] = color[2];
     }
 
     fn array_position(&self, x: u64, y: u64) -> usize {

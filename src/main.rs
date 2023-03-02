@@ -107,7 +107,7 @@ pub fn update_input(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<C
             vec2(mouse_position().0, mouse_position().1)
         );
 
-        let color = util::rgb_to_color(state.color);
+        let color = util::rgb_f32_to_color(state.color);
         canvas.set_pixel(pos.x as u64, pos.y as u64, color);
         if let Err(_) = client.canvas_set_pixel(pos.x as u64, pos.y as u64, color) {
             println!("couldn't set pixel");

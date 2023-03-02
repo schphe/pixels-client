@@ -9,10 +9,18 @@ pub fn color_to_hex(color: Color) -> String {
     )
 }
 
-pub fn rgb_to_color(rgb: [f32; 3]) -> Color {
+pub fn rgb_f32_to_color(rgb: [f32; 3]) -> Color {
     Color::new(
         rgb[0], rgb[1], rgb[2], 1.0,
     )
+}
+
+pub fn color_to_rgb_u8(color: Color) -> [u8; 3] {
+    [
+        (color.r * 255.0) as u8,
+        (color.g * 255.0) as u8,
+        (color.b * 255.0) as u8
+    ]
 }
 
 pub fn calculate_zoom(factor: f32) -> Vec2 {
