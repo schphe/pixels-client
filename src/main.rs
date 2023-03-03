@@ -26,6 +26,7 @@ struct App {
 #[derive(Resource)]
 pub struct State {
     zoom: f32,
+    focus: bool,
     color: [f32; 3],
     camera: Camera2D,
     position: Vec2,
@@ -107,6 +108,10 @@ pub fn update_time(mut time: ResMut<Time>) {
 }
 
 pub fn system_draw(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
+    if state.focus {
+        return;
+    }
+
     if is_mouse_button_pressed(MouseButton::Left) && is_key_down(KeyCode::C) {
         let pos = util::mouse_world_pos(state.camera);
 
@@ -119,6 +124,10 @@ pub fn system_draw(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<Cl
 }
 
 pub fn system_move(mut state: ResMut<State>) {
+    if state.focus {
+        return;
+    }
+
     if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = util::mouse_world_pos(state.camera);
     } else if is_mouse_button_down(MouseButton::Left) {
@@ -142,14 +151,14 @@ pub fn update_camera(mut state: ResMut<State>) {
 
 pub fn draw_settings(mut state: ResMut<State>) {
     egui_macroquad::ui(|ctx| {
-        egui::Window::new("settings")
-            .show(ctx, |ui| {
-                ui.label("cursor color:");
-                ui.color_edit_button_rgb(&mut state.color);
-                ui.label("zoom:");
-                ui.add(egui::Slider::new(&mut state.zoom, 1.0..=10.0));
-                ui.label(format!("{}", state.position));
-            });
+        state.focus = ctx.is_pointer_over_area();
+
+        egui::Window::new("my_left_panel").show(ctx, |ui| {
+            ui.label("color:");
+            ui.color_edit_button_rgb(&mut state.color);
+            ui.label("zoom:");
+            ui.add(egui::Slider::new(&mut state.zoom, 1.0..=10.0));
+        });
     });
 
     egui_macroquad::draw();
@@ -158,7 +167,8 @@ pub fn draw_settings(mut state: ResMut<State>) {
 impl Default for State {
     fn default() -> Self {
         return State{
-            zoom: 5.0,
+            zoom: 3.0,
+            focus: false,
             color: [1.0, 1.0, 1.0],
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
