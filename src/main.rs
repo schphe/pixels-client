@@ -153,7 +153,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
     egui_macroquad::ui(|ctx| {
         state.focus = ctx.is_pointer_over_area();
 
-        egui::Window::new("my_left_panel").show(ctx, |ui| {
+        egui::Window::new("settings").show(ctx, |ui| {
             ui.label("color:");
             ui.color_edit_button_rgb(&mut state.color);
             ui.label("zoom:");
