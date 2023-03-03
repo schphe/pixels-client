@@ -40,13 +40,13 @@ impl Client {
     }
 
     pub fn canvas_set_pixel(&self, x: u64, y: u64, color: Color) -> Result<(), ureq::Error> {
-        let body: serde_json::Value = ureq::put("https://pixels.yazilimcilarinmolayeri.com/canvas/pixel")
+        ureq::put("https://pixels.yazilimcilarinmolayeri.com/canvas/pixel")
             .set("Authorization", format!("Bearer {}", self.token.clone()).as_str())
             .send_json(json!({
                 "x": x,
                 "y": y,
                 "rgb": util::color_to_hex(color)
-            }))?.into_json()?;
+            }))?;
         Ok(())
     }
 }

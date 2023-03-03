@@ -1,5 +1,4 @@
-use bevy_time::{Time, Timer, TimerMode};
-use std::time::Duration;
+use bevy_time::{Time, Timer};
 
 use macroquad::prelude::*;
 use bevy_ecs::prelude::*;

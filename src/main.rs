@@ -26,6 +26,7 @@ struct App {
 #[derive(Resource)]
 pub struct State {
     zoom: f32,
+    track: bool,
     color: [f32; 3],
     camera: Camera2D
 }
@@ -101,11 +102,12 @@ pub fn update_time(mut time: ResMut<Time>) {
     time.update()
 }
 
-pub fn update_input(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
+pub fn update_input(mut state: ResMut<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
+    // todo: better camera controls
+    state.track = is_key_down(KeyCode::Z);
+
     if is_mouse_button_pressed(MouseButton::Left) && is_key_down(KeyCode::C) {
-        let pos = state.camera.screen_to_world(
-            vec2(mouse_position().0, mouse_position().1)
-        );
+        let pos = util::mouse_world_pos(state.camera);
 
         let color = util::rgb_f32_to_color(state.color);
         canvas.set_pixel(pos.x as u64, pos.y as u64, color);
@@ -117,7 +119,11 @@ pub fn update_input(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<C
 
 pub fn update_camera(mut state: ResMut<State>, canvas: Res<Canvas>) {
     state.camera = Camera2D {
-        target: canvas.size_vec2() / vec2(2.0, 2.0),
+        target: if state.track {
+            util::mouse_world_pos(state.camera)
+        } else {
+            canvas.size_vec2() / vec2(2.0, 2.0)
+        },
         zoom: util::calculate_zoom(state.zoom),
         ..Default::default()
     };
@@ -142,6 +148,7 @@ impl Default for State {
     fn default() -> Self {
         return State{
             zoom: 1.0,
+            track: false,
             color: [1.0, 1.0, 1.0],
             camera: Camera2D::default()
         }

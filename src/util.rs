@@ -29,3 +29,9 @@ pub fn calculate_zoom(factor: f32) -> Vec2 {
         -1.0 / screen_height() as f32 * 2.0 * factor,
     )
 }
+
+pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {
+    camera.screen_to_world(
+        vec2(mouse_position().0, mouse_position().1)
+    )
+}
