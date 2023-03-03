@@ -26,9 +26,11 @@ struct App {
 #[derive(Resource)]
 pub struct State {
     zoom: f32,
-    track: bool,
     color: [f32; 3],
-    camera: Camera2D
+    camera: Camera2D,
+    position: Vec2,
+    move_origin: Vec2,
+    last_move_vec: Vec2,
 }
 
 #[macroquad::main("Pixels Client")]
@@ -48,7 +50,7 @@ async fn main() {
 }
 
 impl App {
-    fn new(args: Args, mut canvas: Canvas, mut client: Client, state: State) -> Self {
+    fn new(args: Args, mut canvas: Canvas, mut client: Client, mut state: State) -> Self {
         client.auth(args.refresh.clone()).expect("couldn't get access token");
 
         canvas.set_size(client.canvas_size().expect("couldn't get canvas size"));
@@ -56,6 +58,8 @@ impl App {
             (canvas.width()*2) as f32,
             (canvas.height()*2) as f32,
         );
+        state.position = canvas.size_vec2() / vec2(2.0, 2.0);
+
         canvas.set_data(client.canvas_pixels().expect("couldn't get canvas pixels"));
 
         let mut world = World::new();
@@ -68,8 +72,9 @@ impl App {
 
         let mut update_schedule = Schedule::default();
         update_schedule.add_stage("update", SystemStage::parallel()
+            .with_system(system_draw)
+            .with_system(system_move)
             .with_system(update_time)
-            .with_system(update_input)
             .with_system(update_camera)
             .with_system(canvas::update)
         );
@@ -102,10 +107,7 @@ pub fn update_time(mut time: ResMut<Time>) {
     time.update()
 }
 
-pub fn update_input(mut state: ResMut<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
-    // todo: better camera controls
-    state.track = is_key_down(KeyCode::Z);
-
+pub fn system_draw(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
     if is_mouse_button_pressed(MouseButton::Left) && is_key_down(KeyCode::C) {
         let pos = util::mouse_world_pos(state.camera);
 
@@ -117,13 +119,29 @@ pub fn update_input(mut state: ResMut<State>, mut canvas: ResMut<Canvas>, client
     }
 }
 
-pub fn update_camera(mut state: ResMut<State>, canvas: Res<Canvas>) {
+pub fn system_move(mut state: ResMut<State>) {
+    if is_mouse_button_pressed(MouseButton::Left) {
+        state.move_origin = util::mouse_world_pos(state.camera);
+    } else if is_mouse_button_down(MouseButton::Left) {
+        let pos = util::mouse_world_pos(state.camera);
+        let origin = state.move_origin;
+
+        if pos.distance(origin) > 1.0 {
+            let last_move_vec = state.last_move_vec;
+            state.position -= last_move_vec;
+
+            let move_vec = origin - pos;
+            state.last_move_vec = move_vec;
+            state.position += move_vec;
+        }
+    } else if is_mouse_button_released(MouseButton::Left) {
+        state.last_move_vec = vec2(0.0, 0.0);
+    }
+}
+
+pub fn update_camera(mut state: ResMut<State>) {
     state.camera = Camera2D {
-        target: if state.track {
-            util::mouse_world_pos(state.camera)
-        } else {
-            canvas.size_vec2() / vec2(2.0, 2.0)
-        },
+        target: state.position,
         zoom: util::calculate_zoom(state.zoom),
         ..Default::default()
     };
@@ -138,6 +156,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.color_edit_button_rgb(&mut state.color);
                 ui.label("zoom:");
                 ui.add(egui::Slider::new(&mut state.zoom, 1.0..=10.0));
+                ui.label(format!("{}", state.position));
             });
     });
 
@@ -147,10 +166,12 @@ pub fn draw_settings(mut state: ResMut<State>) {
 impl Default for State {
     fn default() -> Self {
         return State{
-            zoom: 1.0,
-            track: false,
+            zoom: 5.0,
             color: [1.0, 1.0, 1.0],
-            camera: Camera2D::default()
+            camera: Camera2D::default(),
+            position: vec2(0.0, 0.0),
+            move_origin: vec2(0.0, 0.0),
+            last_move_vec: vec2(0.0, 0.0),
         }
     }
 }
