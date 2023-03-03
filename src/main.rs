@@ -72,9 +72,8 @@ impl App {
 
         let mut update_schedule = Schedule::default();
         update_schedule.add_stage("update", SystemStage::parallel()
-            .with_system(system_draw)
-            .with_system(system_move)
             .with_system(update_time)
+            .with_system(update_input)
             .with_system(update_camera)
             .with_system(canvas::update)
         );
@@ -107,31 +106,21 @@ pub fn update_time(mut time: ResMut<Time>) {
     time.update()
 }
 
-pub fn system_draw(state: Res<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
-    if state.focus {
-        return;
-    }
-
-    if is_mouse_button_pressed(MouseButton::Left) && is_key_down(KeyCode::C) {
-        let pos = util::mouse_world_pos(state.camera);
-
-        let color = util::rgb_f32_to_color(state.color);
-        canvas.set_pixel(pos.x as u64, pos.y as u64, color);
-        if let Err(_) = client.canvas_set_pixel(pos.x as u64, pos.y as u64, color) {
-            println!("couldn't set pixel");
-        }
-    }
-}
-
-pub fn system_move(mut state: ResMut<State>) {
-    if state.focus {
-        return;
-    }
+pub fn update_input(mut state: ResMut<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
+    if state.focus { return; }
+    let pos = util::mouse_world_pos(state.camera);
 
     if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = util::mouse_world_pos(state.camera);
+
+        if is_key_down(KeyCode::C) {
+            let color = util::rgb_f32_to_color(state.color);
+            canvas.set_pixel(pos.x as u64, pos.y as u64, color);
+            if let Err(_) = client.canvas_set_pixel(pos.x as u64, pos.y as u64, color) {
+                println!("couldn't set pixel");
+            }
+        }
     } else if is_mouse_button_down(MouseButton::Left) {
-        let pos = util::mouse_world_pos(state.camera);
         let origin = state.move_origin;
 
         if pos.distance(origin) > 1.0 {
