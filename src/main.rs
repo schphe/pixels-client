@@ -30,7 +30,6 @@ pub struct State {
     camera: Camera2D,
     position: Vec2,
     move_origin: Vec2,
-    last_move_vec: Vec2,
 }
 
 #[macroquad::main("Pixels Client")]
@@ -127,15 +126,8 @@ pub fn system_move(mut state: ResMut<State>) {
         let origin = state.move_origin;
 
         if pos.distance(origin) > 1.0 {
-            let last_move_vec = state.last_move_vec;
-            state.position -= last_move_vec;
-
-            let move_vec = origin - pos;
-            state.last_move_vec = move_vec;
-            state.position += move_vec;
+            state.position += origin - pos;
         }
-    } else if is_mouse_button_released(MouseButton::Left) {
-        state.last_move_vec = vec2(0.0, 0.0);
     }
 }
 
@@ -171,7 +163,6 @@ impl Default for State {
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),
-            last_move_vec: vec2(0.0, 0.0),
         }
     }
 }
