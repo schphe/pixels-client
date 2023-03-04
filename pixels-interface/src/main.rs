@@ -104,9 +104,16 @@ pub fn update_time(mut time: ResMut<Time>) {
 }
 
 pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    if state.focus { return; }
+    if is_key_pressed(KeyCode::Z) {
+        state.focus = !state.focus
+    }
+
+    if !state.focus {
+        return;
+    }
+
     let pos = mouse_world_pos(state.camera);
-    
+
     state.zoom = (state.zoom + mouse_wheel().1/120.0).clamp(1.0, 10.0);
 
     if is_mouse_button_pressed(MouseButton::Left) {
@@ -141,14 +148,14 @@ pub fn update_camera(mut state: ResMut<State>) {
 }
 
 pub fn draw_settings(mut state: ResMut<State>) {
-    egui_macroquad::ui(|ctx| {
-        state.focus = ctx.is_pointer_over_area();
+    if state.focus { return; }
 
-        egui::Window::new("settings").show(ctx, |ui| {
+    egui_macroquad::ui(|ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.label("Pixels Client Settings");
+            ui.label("");
             ui.label("color:");
             ui.color_edit_button_rgb(&mut state.color);
-            ui.label("zoom:");
-            ui.add(egui::Slider::new(&mut state.zoom, 1.0..=10.0));
         });
     });
 
@@ -157,9 +164,9 @@ pub fn draw_settings(mut state: ResMut<State>) {
 
 impl Default for State {
     fn default() -> Self {
-        return State{
+        return State {
             zoom: 3.0,
-            focus: false,
+            focus: true,
             color: [1.0, 1.0, 1.0],
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
