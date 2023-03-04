@@ -169,7 +169,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.label("color:");
                 ui.color_edit_button_rgb(&mut state.color);
                 ui.label("");
-                ui.label(format!("cooldown: {}", state.cooldown));
+                ui.label(format!("cooldown: {}", state.cooldown.round()));
             })
         });
     });
