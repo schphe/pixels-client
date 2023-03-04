@@ -63,8 +63,8 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn pixel(&self, x: usize, y: usize) -> Option<&Color> {
-        self.image.get_pixel_color(x, y)
+    pub fn pixel(&self, x: usize, y: usize) -> Option<Color> {
+        self.image.get_pixel_color(x, y).map(|color| color.clone())
     }
 
     pub fn get_cooldown(&self) -> &Cooldown {
