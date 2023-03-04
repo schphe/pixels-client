@@ -11,6 +11,7 @@ use egui_macroquad::egui::Pos2;
 use pixels_canvas::{prelude::*, image::Image};
 use pixels_canvas::prelude::*;
 
+use canvas::{CanvasContainer, CanvasTimer};
 use pixels_util::color::Color;
 
 mod canvas;
@@ -171,14 +172,6 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                     }
                 }
             }
-            DrawState::ColorPick => {
-                state.color = container
-                    .canvas
-                    .pixel(pos.x as usize, pos.y as usize)
-                    .unwrap_or(Color::default())
-                    .as_array();
-            }
-            DrawState::None => {}
         }
     } else if is_mouse_button_down(MouseButton::Middle)
         ^ (is_mouse_button_down(MouseButton::Left) && DrawState::Move == state.draw_state)
