@@ -60,8 +60,7 @@ impl App {
             (canvas.width() * 2) as f32,
             (canvas.height() * 2) as f32,
         );
-        // todo: canvas size as vec2
-        state.position = vec2(canvas.width() as f32, canvas.height() as f32) / 2.0;
+        state.position = calculate_center(&canvas);
 
         let mut draw_schedule = Schedule::default();
         draw_schedule.add_stage("draw", SystemStage::single_threaded()
@@ -172,6 +171,13 @@ pub fn calculate_zoom(factor: f32) -> Vec2 {
         1.0 / (screen_width() as f32) * 2.0 * factor,
         -1.0 / (screen_height() as f32) * 2.0 * factor,
     )
+}
+
+pub fn calculate_center(canvas: &Canvas) -> Vec2 {
+    vec2(
+        canvas.width() as f32,
+        canvas.height() as f32
+    ) / 2.0
 }
 
 pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {

@@ -1,3 +1,5 @@
+use std::ops::Add;
+use chrono::{DateTime, Duration, Utc};
 use client::Client;
 use pixels_util::*;
 use prelude::*;
@@ -18,6 +20,7 @@ pub struct Canvas {
     data: Vec<u8>,
     size: (u64, u64),
     client: Client,
+    cooldown: DateTime<Utc>
 }
 
 impl Canvas {
@@ -29,6 +32,7 @@ impl Canvas {
             data: vec![],
             size: (0, 0),
             client,
+            cooldown: Utc::now()
         };
 
         canvas.update_size().expect("couldn't update size");
@@ -77,9 +81,24 @@ impl Canvas {
         )
     }
 
+    fn set_cooldown(&mut self, seconds: f32) {
+        let duration = Duration::milliseconds((seconds * 1000.0) as i64);
+        self.cooldown = Utc::now() + duration;
+    }
+
+    fn cooldown_ended(&self) -> bool {
+        Utc::now() >= self.cooldown
+    }
+
     pub fn set_pixel(&mut self, x: u64, y: u64, color: Color) -> CanvasResult {
-        // todo: cooldown
-        self.client.canvas_set_pixel(x, y, color.clone())?;
+        if !self.cooldown_ended() {
+            return Err(CanvasError::Cooldown);
+        }
+
+        let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color.clone())?;
+        if remain == 0 {
+            self.set_cooldown(cooldown);
+        }
 
         let pos = self.array_position(x, y);
         let color = color.to_rgb();
