@@ -1,23 +1,21 @@
 use bevy_time::{Time, Timer, TimerMode};
 use std::time::Duration;
 
-use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
-use egui_macroquad::egui;
 use clap::Parser;
+use egui_macroquad::egui;
+use macroquad::prelude::*;
 
 use pixels_canvas::prelude::*;
 
+use canvas::{CanvasContainer, CanvasTimer};
 use pixels_util::color::Color;
-use canvas::{
-    CanvasContainer,
-    CanvasTimer
-};
 
 mod canvas;
 
 #[derive(Parser)]
 pub struct Args {
+    /// Refresh token to connect the API
     refresh: String,
 }
 
@@ -25,6 +23,12 @@ struct App {
     world: World,
     draw_schedule: Schedule,
     update_schedule: Schedule,
+}
+
+enum DrawState {
+    Draw,
+    ColorPick,
+    None,
 }
 
 #[derive(Resource)]
@@ -36,14 +40,12 @@ pub struct State {
     camera: Camera2D,
     position: Vec2,
     move_origin: Vec2,
+    draw_state: DrawState,
 }
 
 #[macroquad::main("Pixels Client")]
 async fn main() {
-    let mut app = App::new(
-        Args::parse(),
-        State::default()
-    );
+    let mut app = App::new(Args::parse(), State::default());
 
     loop {
         app.update();
@@ -57,25 +59,26 @@ impl App {
         let canvas = Canvas::new(args.refresh);
         let mut world = World::new();
 
-        request_new_screen_size(
-            (canvas.width() * 2) as f32,
-            (canvas.height() * 2) as f32,
-        );
+        request_new_screen_size((canvas.width() * 2) as f32, (canvas.height() * 2) as f32);
         state.position = calculate_center(&canvas);
 
         let mut draw_schedule = Schedule::default();
-        draw_schedule.add_stage("draw", SystemStage::single_threaded()
-            .with_system(canvas::draw.label("canvas"))
-            .with_system(draw_settings.after("canvas"))
+        draw_schedule.add_stage(
+            "draw",
+            SystemStage::single_threaded()
+                .with_system(canvas::draw.label("canvas"))
+                .with_system(draw_settings.after("canvas")),
         );
 
         let mut update_schedule = Schedule::default();
-        update_schedule.add_stage("update", SystemStage::parallel()
-            .with_system(update_time)
-            .with_system(update_input)
-            .with_system(update_camera)
-            .with_system(canvas::update)
-            .with_system(update_cooldown)
+        update_schedule.add_stage(
+            "update",
+            SystemStage::parallel()
+                .with_system(update_time)
+                .with_system(update_input)
+                .with_system(update_camera)
+                .with_system(canvas::update)
+                .with_system(update_cooldown),
         );
 
         world.insert_resource(CanvasContainer::new(canvas));
@@ -83,11 +86,14 @@ impl App {
 
         world.insert_resource(Time::default());
         world.insert_resource(CanvasTimer::new(Timer::new(
-            Duration::from_secs(5), TimerMode::Repeating
+            Duration::from_secs(5),
+            TimerMode::Repeating,
         )));
 
         App {
-            world, draw_schedule, update_schedule
+            world,
+            draw_schedule,
+            update_schedule,
         }
     }
 
@@ -105,7 +111,7 @@ pub fn update_time(mut time: ResMut<Time>) {
     time.update()
 }
 
-pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>){
+pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>) {
     state.cooldown = container.canvas.get_cooldown().remaining();
 }
 
@@ -122,23 +128,42 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
 
     state.zoom = (state.zoom + mouse_wheel().1 / 120.0).clamp(1.0, 10.0);
 
+    if is_key_down(KeyCode::B) {
+        state.draw_state = DrawState::Draw;
+    }
+
+    if is_key_down(KeyCode::I) {
+        state.draw_state = DrawState::ColorPick;
+    }
+
     if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos;
 
-        if is_key_down(KeyCode::C) {
-            if let Err(e) = container.canvas.set_pixel(pos.x as usize, pos.y as usize, Color::from(state.color)) {
-                match e {
-                    CanvasError::ClientError => {
-                        panic!("couldn't set pixel");
-                    }
-                    CanvasError::Cooldown(cooldown) => {
-                        println!("please wait cooldown to end: {}", cooldown.remaining());
+        match state.draw_state {
+            DrawState::Draw => {
+                if let Err(e) = container.canvas.set_pixel(
+                    pos.x as usize,
+                    pos.y as usize,
+                    Color::from(state.color),
+                ) {
+                    match e {
+                        CanvasError::ClientError => {
+                            panic!("couldn't set pixel");
+                        }
+                        CanvasError::Cooldown(cooldown) => {
+                            println!("please wait cooldown to end: {}", cooldown.remaining());
+                        }
                     }
                 }
             }
-        }
-        if is_key_down(KeyCode::X) {
-            state.color = container.canvas.pixel(pos.x as usize, pos.y as usize).unwrap_or(&Color::default()).as_array();
+            DrawState::ColorPick => {
+                state.color = container
+                    .canvas
+                    .pixel(pos.x as usize, pos.y as usize)
+                    .unwrap_or(&Color::default())
+                    .as_array();
+            }
+            DrawState::None => {}
         }
     } else if is_mouse_button_down(MouseButton::Left) {
         let origin = state.move_origin;
@@ -156,7 +181,9 @@ pub fn update_camera(mut state: ResMut<State>) {
 }
 
 pub fn draw_settings(mut state: ResMut<State>) {
-    if state.focus { return; }
+    if state.focus {
+        return;
+    }
 
     egui_macroquad::ui(|ctx| {
         egui::SidePanel::left("settings").show(ctx, |ui| {
@@ -185,6 +212,7 @@ impl Default for State {
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),
+            draw_state: DrawState::None,
         }
     }
 }
@@ -197,14 +225,9 @@ pub fn calculate_zoom(factor: f32) -> Vec2 {
 }
 
 pub fn calculate_center(canvas: &Canvas) -> Vec2 {
-    vec2(
-        canvas.width() as f32,
-        canvas.height() as f32
-    ) / 2.0
+    vec2(canvas.width() as f32, canvas.height() as f32) / 2.0
 }
 
 pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {
-    camera.screen_to_world(
-        vec2(mouse_position().0, mouse_position().1)
-    )
+    camera.screen_to_world(vec2(mouse_position().0, mouse_position().1))
 }
