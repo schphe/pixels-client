@@ -108,15 +108,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
     if state.focus { return; }
     let pos = mouse_world_pos(state.camera);
     
-    let temp_zoom = state.zoom + mouse_wheel().1/120.0;
-    if temp_zoom < 1.0{
-        state.zoom = 1.0;
-    }else if temp_zoom > 10.0{
-        state.zoom = 10.0
-    }else{
-        state.zoom = temp_zoom;
-    }
-    
+    state.zoom = (state.zoom + mouse_wheel().1/120.0).clamp(1.0, 10.0);
 
     if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos.clone();
