@@ -35,7 +35,7 @@ impl From<Cooldown> for f32{
 
 impl Display for Cooldown{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.get_cooldown_secs())
+        write!(f, "{}", self.get_cooldown_secs().round())
     }
 }
 
