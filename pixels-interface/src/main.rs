@@ -199,6 +199,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.label("");
                 ui.label(format!("cooldown: {}", state.cooldown.round()));
                 ui.label(format!("selected: {}", state.tool_selection));
+                ui.label("");
                 if ui.add(egui::Button::new("brush")).clicked() {
                     state.tool_selection = ToolSelection::Draw;
                 }
