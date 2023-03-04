@@ -5,10 +5,11 @@ use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
 use egui_macroquad::egui;
 use clap::Parser;
+use egui_macroquad::egui::Widget;
 
 use pixels_canvas::prelude::*;
 
-use pixels_util::{color::Color, cooldown::Cooldown};
+use pixels_util::color::Color;
 use canvas::{
     CanvasContainer,
     CanvasTimer
@@ -29,7 +30,7 @@ struct App {
 
 #[derive(Resource)]
 pub struct State {
-    cooldown: Cooldown,
+    cooldown: f32,
     zoom: f32,
     focus: bool,
     color: [f32; 3],
@@ -106,7 +107,7 @@ pub fn update_time(mut time: ResMut<Time>) {
 }
 
 pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>){
-    state.cooldown = *container.get_cooldown();
+    state.cooldown = container.canvas.get_cooldown().remaining();
 }
 
 pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
@@ -133,7 +134,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                         panic!("couldn't set pixel");
                     }
                     CanvasError::Cooldown(cooldown) => {
-                        println!("please wait cooldown to end: {cooldown}");
+                        println!("please wait cooldown to end: {}", cooldown.remaining());
                     }
                 }
             }
@@ -162,11 +163,13 @@ pub fn draw_settings(mut state: ResMut<State>) {
     egui_macroquad::ui(|ctx| {
         egui::SidePanel::left("settings").show(ctx, |ui| {
             ui.vertical_centered(|ui| {
+                ui.label("");
                 ui.label("Pixels Client Settings");
                 ui.label("");
-                ui.label("color");
+                ui.label("color:");
                 ui.color_edit_button_rgb(&mut state.color);
-                ui.label(format!("cooldown: {}", state.cooldown))
+                ui.label("");
+                ui.label(format!("cooldown: {}", state.cooldown));
             })
         });
     });
@@ -177,7 +180,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
 impl Default for State {
     fn default() -> Self {
         State {
-            cooldown: Cooldown::default(),
+            cooldown: 0.0,
             zoom: 3.0,
             focus: true,
             color: [1.0, 1.0, 1.0],

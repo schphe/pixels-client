@@ -79,26 +79,18 @@ impl Canvas {
         )
     }
 
-    pub fn set_cooldown(&mut self, seconds: f32) {
-        self.cooldown.set_cooldown(seconds);
-    }
-
-    pub fn is_cooldown_ended(&self) -> bool {
-        self.cooldown.is_cooldown_ended()
-    }
-
     pub fn get_cooldown(&self) -> &Cooldown {
         &self.cooldown
     }
 
     pub fn set_pixel(&mut self, x: u64, y: u64, color: Color) -> CanvasResult {
-        if !self.is_cooldown_ended() {
+        if !self.cooldown.is_ended() {
             return Err(CanvasError::Cooldown(self.cooldown));
         }
 
         let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color)?;
         if remain == 0 {
-            self.set_cooldown(cooldown);
+            self.cooldown.set(cooldown);
         }
 
         let pos = self.array_position(x, y);
