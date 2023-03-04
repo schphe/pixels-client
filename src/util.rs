@@ -2,8 +2,8 @@ use macroquad::prelude::*;
 
 pub fn calculate_zoom(factor: f32) -> Vec2 {
     vec2(
-        1.0 / screen_width() as f32 * 2.0 * factor,
-        -1.0 / screen_height() as f32 * 2.0 * factor,
+        1.0 / (screen_width() as f32) * 2.0 * factor,
+        -1.0 / (screen_height() as f32) * 2.0 * factor,
     )
 }
 
@@ -16,9 +16,9 @@ pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {
 pub fn color_to_hex(color: Color) -> String {
     return format!(
         "{:02x}{:02x}{:02x}",
-        (color.r*255.0) as u8,
-        (color.g*255.0) as u8,
-        (color.b*255.0) as u8
+        (color.r * 255.0) as u8,
+        (color.g * 255.0) as u8,
+        (color.b * 255.0) as u8
     )
 }
 

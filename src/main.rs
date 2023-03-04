@@ -55,10 +55,10 @@ impl App {
 
         canvas.set_size(client.canvas_size().expect("couldn't get canvas size"));
         request_new_screen_size(
-            (canvas.width()*2) as f32,
-            (canvas.height()*2) as f32,
+            (canvas.width() * 2) as f32,
+            (canvas.height() * 2) as f32,
         );
-        state.position = canvas.size_vec2() / vec2(2.0, 2.0);
+        state.position = canvas.size_vec2() / 2.0;
 
         canvas.set_data(client.canvas_pixels().expect("couldn't get canvas pixels"));
 
