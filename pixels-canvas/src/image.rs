@@ -30,7 +30,7 @@ impl Image {
         }
     }
 
-    pub fn from_vec(data: Vec<u8>, size: (u64, u64)) -> Self {
+    pub fn from_vec(data: Vec<u8>, size: (u64, u64)) -> Self{
         let mut y_axis = Vec::with_capacity(size.1 as usize);
         let mut x_axis = Vec::with_capacity(size.0 as usize);
 
@@ -56,14 +56,23 @@ impl Image {
         self.size.1
     }
 
-    pub fn get_pixel_color(&self, x: usize, y: usize) -> Option<&Color> {
+    pub fn get_pixel_color(&self, x: usize, y: usize) -> Option<&Color>{
         
-        self.data.get(y as usize).and_then(|x_axis| x_axis.get(x as usize))
+        self.data.get(y).and_then(|x_axis| x_axis.get(x))
     }
 
-    pub fn set_pixel_color(&mut self, x: usize, y: usize, color: Color) {
-        if let Some(pixel) = self.data.get_mut(y as usize).and_then(|x_axis| x_axis.get_mut(x)) {
+    pub fn set_pixel_color(&mut self, x: usize, y: usize, color: Color){
+        if let Some(pixel) = self.data.get_mut(y).and_then(|x_axis| x_axis.get_mut(x)){
             *pixel = color;
         }
     }
+
+    pub fn replace_part_with_image(&mut self, part_location_x: usize, part_location_y: usize, part_image: &Image){
+        for (y, y_elements) in self.data.get_mut(part_location_y.min(self.size.1 as usize)..(part_location_y + part_image.size.1 as usize).min(self.size.1 as usize)).expect(format!("Unexpected location: (x: {}, y: {})", part_location_x, part_location_y).as_str()).into_iter().enumerate(){
+            for (x, color) in y_elements.get_mut(part_location_x.min(self.size.0 as usize)..(part_location_x + part_image.size.0 as usize).min(self.size.0 as usize)).expect(format!("Unexpected location: (x: {}, y: {})", part_location_x, part_location_y).as_str()).into_iter().enumerate(){
+                *color = *part_image.get_pixel_color(x, y).expect(format!("Unexpected location: (x: {}, y: {})", part_location_x, part_location_y).as_str());
+            }
+        }
+    }
 }
+

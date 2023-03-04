@@ -1,18 +1,15 @@
-use client::Client;
 use crate::image::Image;
+use client::Client;
 use pixels_util::{color::Color, cooldown::Cooldown};
 use prelude::*;
 
-mod image;
 mod client;
 pub mod error;
+pub mod image;
 pub mod prelude {
     pub use super::{
-        error::{
-            CanvasResult,
-            CanvasError
-        },
-        Canvas
+        error::{CanvasError, CanvasResult},
+        Canvas,
     };
 }
 
@@ -34,10 +31,12 @@ impl Canvas {
         let mut canvas = Canvas {
             image,
             client,
-            cooldown: Cooldown::default()
+            cooldown: Cooldown::default(),
         };
 
-        canvas.update_pixels().expect("couldn't update canvas pixels");
+        canvas
+            .update_pixels()
+            .expect("couldn't update canvas pixels");
 
         canvas
     }
@@ -85,5 +84,9 @@ impl Canvas {
         self.image.set_pixel_color(x, y, color);
 
         Ok(())
+    }
+
+    pub fn replace_part_with_image(&mut self, part_location_x: usize, part_location_y: usize, part_image: &Image){
+        self.image.replace_part_with_image(part_location_x, part_location_y, part_image);
     }
 }
