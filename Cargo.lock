@@ -1274,16 +1274,15 @@ checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
 
 [[package]]
 name = "pixels-canvas"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
- "chrono",
  "pixels-util",
  "ureq",
 ]
 
 [[package]]
 name = "pixels-interface"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bevy_ecs",
  "bevy_time",
@@ -1296,7 +1295,10 @@ dependencies = [
 
 [[package]]
 name = "pixels-util"
-version = "0.1.0"
+version = "0.1.1"
+dependencies = [
+ "chrono",
+]
 
 [[package]]
 name = "pkg-config"

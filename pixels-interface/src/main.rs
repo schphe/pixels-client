@@ -7,8 +7,8 @@ use egui_macroquad::egui;
 use clap::Parser;
 
 use pixels_canvas::prelude::*;
-use pixels_util::Color;
 
+use pixels_util::{color::Color, cooldown::Cooldown};
 use canvas::{
     CanvasContainer,
     CanvasTimer
@@ -29,6 +29,7 @@ struct App {
 
 #[derive(Resource)]
 pub struct State {
+    cooldown: Cooldown,
     zoom: f32,
     focus: bool,
     color: [f32; 3],
@@ -53,7 +54,7 @@ async fn main() {
 
 impl App {
     fn new(args: Args, mut state: State) -> Self {
-        let mut canvas = Canvas::new(args.refresh.clone());
+        let canvas = Canvas::new(args.refresh.clone());
         let mut world = World::new();
 
         request_new_screen_size(
@@ -74,6 +75,7 @@ impl App {
             .with_system(update_input)
             .with_system(update_camera)
             .with_system(canvas::update)
+            .with_system(update_cooldown)
         );
 
         world.insert_resource(CanvasContainer::new(canvas));
@@ -103,6 +105,10 @@ pub fn update_time(mut time: ResMut<Time>) {
     time.update()
 }
 
+pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>){
+    state.cooldown = container.get_cooldown().clone();
+}
+
 pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
     if is_key_pressed(KeyCode::Z) {
         state.focus = !state.focus
@@ -126,8 +132,8 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                     CanvasError::ClientError => {
                         panic!("couldn't set pixel");
                     }
-                    CanvasError::Cooldown(secs) => {
-                        println!("please wait cooldown to end: {}", secs);
+                    CanvasError::Cooldown(cooldown) => {
+                        println!("please wait cooldown to end: {}", cooldown);
                     }
                 }
             }
@@ -160,7 +166,8 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.label("");
                 ui.label("color");
                 ui.color_edit_button_rgb(&mut state.color);
-            });
+                ui.label(format!("cooldown: {}", state.cooldown))
+            })
         });
     });
 
@@ -170,6 +177,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
 impl Default for State {
     fn default() -> Self {
         return State {
+            cooldown: Cooldown::default(),
             zoom: 3.0,
             focus: true,
             color: [1.0, 1.0, 1.0],

@@ -1,10 +1,11 @@
-use bevy_time::{Time, Timer, TimerMode};
+use bevy_time::{Time, Timer};
 
 use pixels_canvas::prelude::*;
 use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
 
-use pixels_util::Color;
+use pixels_util::{color::Color, cooldown::Cooldown};
+
 use super::State;
 
 #[derive(Resource)]
@@ -15,6 +16,10 @@ pub struct CanvasContainer {
 impl CanvasContainer {
     pub fn new(canvas: Canvas) -> Self {
         Self { canvas }
+    }
+
+    pub fn get_cooldown(&self) -> &Cooldown{
+        self.canvas.get_cooldown()
     }
 }
 
