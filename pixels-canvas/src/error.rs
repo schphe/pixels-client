@@ -3,7 +3,7 @@ pub type CanvasResult = Result<(), CanvasError>;
 #[derive(Debug)]
 pub enum CanvasError {
     ClientError,
-    Cooldown
+    Cooldown(f32)
 }
 
 impl From<ureq::Error> for CanvasError {

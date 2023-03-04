@@ -86,13 +86,17 @@ impl Canvas {
         self.cooldown = Utc::now() + duration;
     }
 
-    fn cooldown_ended(&self) -> bool {
+    fn is_cooldown_ended(&self) -> bool {
         Utc::now() >= self.cooldown
     }
 
+    fn get_cooldown_secs(&self) -> f32 {
+        (self.cooldown - Utc::now()).num_milliseconds() as f32 / 1000.0
+    }
+
     pub fn set_pixel(&mut self, x: u64, y: u64, color: Color) -> CanvasResult {
-        if !self.cooldown_ended() {
-            return Err(CanvasError::Cooldown);
+        if !self.is_cooldown_ended() {
+            return Err(CanvasError::Cooldown(self.get_cooldown_secs()));
         }
 
         let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color.clone())?;

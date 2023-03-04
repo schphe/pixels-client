@@ -119,8 +119,8 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                     CanvasError::ClientError => {
                         panic!("couldn't set pixel");
                     }
-                    CanvasError::Cooldown => {
-                        println!("please wait cooldown to end");
+                    CanvasError::Cooldown(secs) => {
+                        println!("please wait cooldown to end: {}", secs);
                     }
                 }
             }
