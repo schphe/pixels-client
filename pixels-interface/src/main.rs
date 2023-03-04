@@ -205,6 +205,17 @@ pub fn draw_settings(mut state: ResMut<State>) {
             });
             ui.label("");
             ui.label(format!("Selected Tool: {}", state.selected_tool));
+            ui.horizontal(|ui| {
+                if ui.add(egui::Button::new("brush")).clicked() {
+                    state.selected_tool = ToolState::Draw;
+                }
+                if ui.add(egui::Button::new("move tool")).clicked() {
+                    state.selected_tool = ToolState::Move;
+                }
+                if ui.add(egui::Button::new("color picker")).clicked() {
+                    state.selected_tool = ToolState::ColorPick;
+                }
+            });
             ui.add_space(ui.available_height() - 20.0);
             ui.horizontal(|ui| {
                 ui.label("Cooldown: ");
@@ -234,17 +245,16 @@ impl Default for State {
     }
 }
 
-
-impl Display for ToolSelection {
+impl Display for ToolState {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ToolSelection::Draw => {
+            Self::Draw => {
                 write!(f, "brush")
             }
-            ToolSelection::Move => {
+            Self::Move => {
                 write!(f, "move tool")
             }
-            ToolSelection::ColorPick => {
+            Self::ColorPick => {
                 write!(f, "color picker")
             }
         }
