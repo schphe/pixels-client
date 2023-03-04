@@ -227,7 +227,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
                     state.selected_tool = ToolState::ColorPick;
                 }
                 if ui.add(egui::Button::new("add image")).clicked() {
-                    state.image = Some(Image::new("happy-ferris.png"));
+                    state.image = state.image.is_none().then(|| Image::new("happy-ferris.png"));
                 }
             });
             ui.add_space(ui.available_height() - 20.0);
