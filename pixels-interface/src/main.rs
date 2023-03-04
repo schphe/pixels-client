@@ -152,10 +152,12 @@ pub fn draw_settings(mut state: ResMut<State>) {
 
     egui_macroquad::ui(|ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Pixels Client Settings");
-            ui.label("");
-            ui.label("color:");
-            ui.color_edit_button_rgb(&mut state.color);
+            ui.vertical_centered(|ui| {
+                ui.label("Pixels Client Settings");
+                ui.label("");
+                ui.label("color");
+                ui.color_edit_button_rgb(&mut state.color);
+            })
         });
     });
 
