@@ -3,6 +3,7 @@ use std::fmt::Display;
 use chrono::{DateTime, Utc, Duration};
 
 #[derive(Debug, Copy, Clone)]
+#[derive(Default)]
 pub struct Cooldown{
     time: Option<DateTime<Utc>>
 }
@@ -13,19 +14,15 @@ impl Cooldown{
     }
 
     pub fn is_cooldown_ended(&self) -> bool {
-        self.time.and_then(|time| Some(Utc::now() >= time)).unwrap_or(true)
+        self.time.map(|time| Utc::now() >= time).unwrap_or(true)
     }
 
     fn get_cooldown_secs(&self) -> f32{
-        self.time.and_then(|time| Some(((time - Utc::now()).num_milliseconds() as f32 / 1000.0).max(0.0))).unwrap_or(0.0)
+        self.time.map(|time| ((time - Utc::now()).num_milliseconds() as f32 / 1000.0).max(0.0)).unwrap_or(0.0)
     }
 }
 
-impl Default for Cooldown {
-    fn default() -> Self {
-        Self { time: None }
-    }
-}
+
 
 impl From<Cooldown> for f32{
     fn from(value: Cooldown) -> Self {
