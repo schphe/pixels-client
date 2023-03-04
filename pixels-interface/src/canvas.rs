@@ -41,14 +41,14 @@ pub fn update(time: Res<Time>, mut timer: ResMut<CanvasTimer>, mut container: Re
 }
 
 pub fn draw(state: Res<State>, container: Res<CanvasContainer>) {
-    for x in 0..container.canvas.width() {
-        for y in 0..container.canvas.height() {
+    for y in 0..container.canvas.height() {
+        for x in 0..container.canvas.width() {
             draw_rectangle(
                 x as f32, y as f32, 1.0, 1.0,
                 convert_color(if state.focus {
-                    container.canvas.pixel(x, y)
+                    container.canvas.pixel(x as usize, y as usize).expect(format!("Unexpected index: (x: {}, y: {})", x, y).as_str()).clone()
                 } else {
-                    dim_color(container.canvas.pixel(x, y))
+                    dim_color(container.canvas.pixel(x as usize, y as usize).expect("Unexpected index"))
                 })
             );
         }
@@ -61,6 +61,6 @@ pub fn convert_color(color: Color) -> macroquad::color::Color {
     )
 }
 
-fn dim_color(color: Color) -> Color {
+fn dim_color(color: &Color) -> Color {
     Color::new(color.r * 0.5, color.g * 0.5, color.b * 0.5)
 }

@@ -8,7 +8,7 @@ use clap::Parser;
 
 use pixels_canvas::prelude::*;
 
-use pixels_util::{color::Color, cooldown::Cooldown};
+use pixels_util::color::Color;
 use canvas::{
     CanvasContainer,
     CanvasTimer
@@ -29,7 +29,7 @@ struct App {
 
 #[derive(Resource)]
 pub struct State {
-    cooldown: Cooldown,
+    cooldown: f32,
     zoom: f32,
     focus: bool,
     color: [f32; 3],
@@ -106,7 +106,7 @@ pub fn update_time(mut time: ResMut<Time>) {
 }
 
 pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>){
-    state.cooldown = *container.get_cooldown();
+    state.cooldown = container.canvas.get_cooldown().remaining();
 }
 
 pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
@@ -126,20 +126,19 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
         state.move_origin = pos;
 
         if is_key_down(KeyCode::C) {
-            let color = Color::from(state.color);
-            if let Err(e) = container.canvas.set_pixel(pos.x as u64, pos.y as u64, color) {
+            if let Err(e) = container.canvas.set_pixel(pos.x as usize, pos.y as usize, Color::from(state.color)) {
                 match e {
                     CanvasError::ClientError => {
                         panic!("couldn't set pixel");
                     }
                     CanvasError::Cooldown(cooldown) => {
-                        println!("please wait cooldown to end: {}", cooldown);
+                        println!("please wait cooldown to end: {}", cooldown.remaining());
                     }
                 }
             }
         }
         if is_key_down(KeyCode::X) {
-            state.color = container.canvas.pixel(pos.x as u64, pos.y as u64).as_array();
+            state.color = container.canvas.pixel(pos.x as usize, pos.y as usize).unwrap_or(&Color::default()).as_array();
         }
     } else if is_mouse_button_down(MouseButton::Left) {
         let origin = state.move_origin;
@@ -162,11 +161,13 @@ pub fn draw_settings(mut state: ResMut<State>) {
     egui_macroquad::ui(|ctx| {
         egui::SidePanel::left("settings").show(ctx, |ui| {
             ui.vertical_centered(|ui| {
+                ui.label("");
                 ui.label("Pixels Client Settings");
                 ui.label("");
-                ui.label("color");
+                ui.label("color:");
                 ui.color_edit_button_rgb(&mut state.color);
-                ui.label(format!("cooldown: {}", state.cooldown))
+                ui.label("");
+                ui.label(format!("cooldown: {}", state.cooldown.round()));
             })
         });
     });
@@ -177,10 +178,10 @@ pub fn draw_settings(mut state: ResMut<State>) {
 impl Default for State {
     fn default() -> Self {
         State {
-            cooldown: Cooldown::default(),
+            cooldown: 0.0,
             zoom: 3.0,
             focus: true,
-            color: [1.0, 1.0, 1.0],
+            color: [1.0; 3],
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),
