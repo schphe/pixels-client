@@ -27,7 +27,9 @@ struct App {
     update_schedule: Schedule,
 }
 
+#[derive(PartialEq, Eq)]
 enum DrawState {
+    Move,
     Draw,
     ColorPick,
     None,
@@ -127,6 +129,10 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
 
     state.zoom = (state.zoom + mouse_wheel().1 / 120.0).clamp(1.0, 10.0);
 
+    if is_key_down(KeyCode::M) {
+        state.draw_state = DrawState::Move;
+    }
+
     if is_key_down(KeyCode::B) {
         state.draw_state = DrawState::Draw;
     }
@@ -139,6 +145,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
         state.move_origin = pos;
 
         match state.draw_state {
+            DrawState::Move => {}
             DrawState::Draw => {
                 if let Err(e) = container.canvas.set_pixel(
                     pos.x as usize,
@@ -164,7 +171,9 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
             }
             DrawState::None => {}
         }
-    } else if is_mouse_button_down(MouseButton::Left) {
+    } else if is_mouse_button_down(MouseButton::Middle)
+        ^ (is_mouse_button_down(MouseButton::Left) && DrawState::Move == state.draw_state)
+    {
         let origin = state.move_origin;
         state.position += origin - pos;
     }
@@ -209,7 +218,7 @@ impl Default for State {
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),
-            draw_state: DrawState::None,
+            draw_state: DrawState::Move,
             menu_area: Rect::NOTHING,
         }
     }
