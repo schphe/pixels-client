@@ -38,4 +38,12 @@ impl Color {
             (self.b * 255.0) as u8
         )
     }
+
+    pub fn as_array(&self) -> [f32; 3] {
+        [
+            self.r,
+            self.g,
+            self.b
+        ]
+    }
 }

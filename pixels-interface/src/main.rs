@@ -132,6 +132,9 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                 }
             }
         }
+        if is_key_down(KeyCode::X) {
+            state.color = container.canvas.pixel(pos.x as u64, pos.y as u64).as_array();
+        }
     } else if is_mouse_button_down(MouseButton::Left) {
         let origin = state.move_origin;
         state.position += origin - pos;
