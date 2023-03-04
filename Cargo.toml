@@ -1,17 +1,6 @@
-[package]
-name = "pixels-client"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-clap = {version = "4.1.8", features = ["derive"]}
-egui-macroquad = "0.15.0"
-macroquad = "0.3.25"
-bevy_ecs = "0.9.1"
-bevy_time = "0.9.1"
-egui = "0.21.0"
-serde_json = "1.0.93"
-ureq = {version = "2.6.2", features = ["json"]}
-tokio = {version = "1.26.0", features = ["full"]}
+[workspace]
+members = [
+    "pixels-canvas",
+    "pixels-interface",
+    "pixels-util"
+]

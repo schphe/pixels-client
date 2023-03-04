@@ -3,14 +3,18 @@ use std::time::Duration;
 
 use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
+use egui_macroquad::egui;
 use clap::Parser;
 
-use canvas::Canvas;
-use client::Client;
+use pixels_canvas::prelude::*;
+use pixels_util::Color;
+
+use canvas::{
+    CanvasContainer,
+    CanvasTimer
+};
 
 mod canvas;
-mod client;
-mod util;
 
 #[derive(Parser)]
 pub struct Args {
@@ -37,8 +41,6 @@ pub struct State {
 async fn main() {
     let mut app = App::new(
         Args::parse(),
-        Canvas::new(),
-        Client::new(),
         State::default()
     );
 
@@ -50,19 +52,16 @@ async fn main() {
 }
 
 impl App {
-    fn new(args: Args, mut canvas: Canvas, mut client: Client, mut state: State) -> Self {
-        client.auth(args.refresh.clone()).expect("couldn't get access token");
+    fn new(args: Args, mut state: State) -> Self {
+        let mut canvas = Canvas::new(args.refresh.clone());
+        let mut world = World::new();
 
-        canvas.set_size(client.canvas_size().expect("couldn't get canvas size"));
         request_new_screen_size(
             (canvas.width() * 2) as f32,
             (canvas.height() * 2) as f32,
         );
-        state.position = canvas.size_vec2() / 2.0;
-
-        canvas.set_data(client.canvas_pixels().expect("couldn't get canvas pixels"));
-
-        let mut world = World::new();
+        // todo: canvas size as vec2
+        state.position = vec2(canvas.width() as f32, canvas.height() as f32) / 2.0;
 
         let mut draw_schedule = Schedule::default();
         draw_schedule.add_stage("draw", SystemStage::single_threaded()
@@ -78,12 +77,11 @@ impl App {
             .with_system(canvas::update)
         );
 
-        world.insert_resource(canvas);
-        world.insert_resource(client);
+        world.insert_resource(CanvasContainer::new(canvas));
         world.insert_resource(state);
 
         world.insert_resource(Time::default());
-        world.insert_resource(canvas::CanvasTimer(Timer::new(
+        world.insert_resource(CanvasTimer::new(Timer::new(
             Duration::from_secs(5), TimerMode::Repeating
         )));
 
@@ -106,18 +104,24 @@ pub fn update_time(mut time: ResMut<Time>) {
     time.update()
 }
 
-pub fn update_input(mut state: ResMut<State>, mut canvas: ResMut<Canvas>, client: Res<Client>) {
+pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
     if state.focus { return; }
-    let pos = util::mouse_world_pos(state.camera);
+    let pos = mouse_world_pos(state.camera);
 
     if is_mouse_button_pressed(MouseButton::Left) {
-        state.move_origin = util::mouse_world_pos(state.camera);
+        state.move_origin = pos.clone();
 
         if is_key_down(KeyCode::C) {
-            let color = util::rgb_f32_to_color(state.color);
-            canvas.set_pixel(pos.x as u64, pos.y as u64, color);
-            if let Err(_) = client.canvas_set_pixel(pos.x as u64, pos.y as u64, color) {
-                println!("couldn't set pixel");
+            let color = Color::from(state.color);
+            if let Err(e) = container.canvas.set_pixel(pos.x as u64, pos.y as u64, color) {
+                match e {
+                    CanvasError::ClientError => {
+                        panic!("couldn't set pixel");
+                    }
+                    CanvasError::Cooldown => {
+                        println!("please wait cooldown to end");
+                    }
+                }
             }
         }
     } else if is_mouse_button_down(MouseButton::Left) {
@@ -129,7 +133,7 @@ pub fn update_input(mut state: ResMut<State>, mut canvas: ResMut<Canvas>, client
 pub fn update_camera(mut state: ResMut<State>) {
     state.camera = Camera2D {
         target: state.position,
-        zoom: util::calculate_zoom(state.zoom),
+        zoom: calculate_zoom(state.zoom),
         ..Default::default()
     };
     set_camera(&state.camera);
@@ -161,4 +165,17 @@ impl Default for State {
             move_origin: vec2(0.0, 0.0),
         }
     }
+}
+
+pub fn calculate_zoom(factor: f32) -> Vec2 {
+    vec2(
+        1.0 / (screen_width() as f32) * 2.0 * factor,
+        -1.0 / (screen_height() as f32) * 2.0 * factor,
+    )
+}
+
+pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {
+    camera.screen_to_world(
+        vec2(mouse_position().0, mouse_position().1)
+    )
 }

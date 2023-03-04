@@ -1,0 +1,14 @@
+[package]
+name = "pixels-interface"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pixels-canvas = { path = "../pixels-canvas" }
+pixels-util = { path = "../pixels-util" }
+
+clap = { version = "4.1.8", features = ["derive"] }
+egui-macroquad = "0.15.0"
+macroquad = "0.3.25"
+bevy_time = "0.9.1"
+bevy_ecs = "0.9.1"

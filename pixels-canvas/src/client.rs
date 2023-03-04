@@ -1,10 +1,10 @@
-use macroquad::color::Color;
-use bevy_ecs::prelude::*;
-use serde_json::json;
+use ureq::serde_json::{
+    self, json
+};
 use std::io::Read;
-use crate::util;
 
-#[derive(Resource)]
+use pixels_util::*;
+
 pub struct Client {
     token: String
 }
@@ -45,7 +45,7 @@ impl Client {
             .send_json(json!({
                 "x": x,
                 "y": y,
-                "rgb": util::color_to_hex(color)
+                "rgb": color.to_hex()
             }))?;
         Ok(())
     }
