@@ -10,6 +10,6 @@ pub enum CanvasError {
 
 impl From<ureq::Error> for CanvasError {
     fn from(_value: ureq::Error) -> Self {
-        return CanvasError::ClientError
+        CanvasError::ClientError
     }
 }

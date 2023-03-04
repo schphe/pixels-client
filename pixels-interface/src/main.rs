@@ -54,7 +54,7 @@ async fn main() {
 
 impl App {
     fn new(args: Args, mut state: State) -> Self {
-        let canvas = Canvas::new(args.refresh.clone());
+        let canvas = Canvas::new(args.refresh);
         let mut world = World::new();
 
         request_new_screen_size(
@@ -86,7 +86,7 @@ impl App {
             Duration::from_secs(5), TimerMode::Repeating
         )));
 
-        return App {
+        App {
             world, draw_schedule, update_schedule
         }
     }
@@ -106,7 +106,7 @@ pub fn update_time(mut time: ResMut<Time>) {
 }
 
 pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>){
-    state.cooldown = container.get_cooldown().clone();
+    state.cooldown = *container.get_cooldown();
 }
 
 pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
@@ -123,7 +123,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
     state.zoom = (state.zoom + mouse_wheel().1/120.0).clamp(1.0, 10.0);
 
     if is_mouse_button_pressed(MouseButton::Left) {
-        state.move_origin = pos.clone();
+        state.move_origin = pos;
 
         if is_key_down(KeyCode::C) {
             let color = Color::from(state.color);
@@ -133,7 +133,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                         panic!("couldn't set pixel");
                     }
                     CanvasError::Cooldown(cooldown) => {
-                        println!("please wait cooldown to end: {}", cooldown);
+                        println!("please wait cooldown to end: {cooldown}");
                     }
                 }
             }
@@ -176,7 +176,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
 
 impl Default for State {
     fn default() -> Self {
-        return State {
+        State {
             cooldown: Cooldown::default(),
             zoom: 3.0,
             focus: true,
@@ -190,8 +190,8 @@ impl Default for State {
 
 pub fn calculate_zoom(factor: f32) -> Vec2 {
     vec2(
-        1.0 / (screen_width() as f32) * 2.0 * factor,
-        -1.0 / (screen_height() as f32) * 2.0 * factor,
+        1.0 / screen_width() * 2.0 * factor,
+        -1.0 / screen_height() * 2.0 * factor,
     )
 }
 

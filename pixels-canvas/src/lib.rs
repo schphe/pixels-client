@@ -36,7 +36,7 @@ impl Canvas {
         canvas.update_size().expect("couldn't update size");
         canvas.update_pixels().expect("couldn't update canvas pixels");
 
-        return canvas;
+        canvas
     }
 
     pub fn width(&self) -> u64 {
@@ -96,7 +96,7 @@ impl Canvas {
             return Err(CanvasError::Cooldown(self.cooldown));
         }
 
-        let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color.clone())?;
+        let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color)?;
         if remain == 0 {
             self.set_cooldown(cooldown);
         }
