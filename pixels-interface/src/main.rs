@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use bevy_time::{Time, Timer, TimerMode};
 use std::time::Duration;
 
@@ -29,11 +30,10 @@ struct App {
 }
 
 #[derive(PartialEq, Eq)]
-enum DrawState {
-    Move,
+enum ToolSelection {
     Draw,
+    Move,
     ColorPick,
-    None,
 }
 
 #[derive(Resource)]
@@ -46,7 +46,7 @@ pub struct State {
     camera: Camera2D,
     position: Vec2,
     move_origin: Vec2,
-    draw_state: DrawState,
+    tool_selection: ToolSelection,
     menu_area: Rect,
 }
 
@@ -140,23 +140,23 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
     state.zoom = (state.zoom + mouse_wheel().1 / 120.0).clamp(1.0, 10.0);
 
     if is_key_down(KeyCode::M) {
-        state.draw_state = DrawState::Move;
+        state.tool_selection = ToolSelection::Move;
     }
 
     if is_key_down(KeyCode::B) {
-        state.draw_state = DrawState::Draw;
+        state.tool_selection = ToolSelection::Draw;
     }
 
     if is_key_down(KeyCode::I) {
-        state.draw_state = DrawState::ColorPick;
+        state.tool_selection = ToolSelection::ColorPick;
     }
 
     if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos;
 
-        match state.draw_state {
-            DrawState::Move => {}
-            DrawState::Draw => {
+        match state.tool_selection {
+            ToolSelection::Move => {}
+            ToolSelection::Draw => {
                 if let Err(e) = container.canvas.set_pixel(
                     pos.x as usize,
                     pos.y as usize,
@@ -172,9 +172,16 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                     }
                 }
             }
+            ToolSelection::ColorPick => {
+                state.color = container
+                    .canvas
+                    .pixel(pos.x as usize, pos.y as usize)
+                    .unwrap_or(Color::default())
+                    .as_array();
+            }
         }
     } else if is_mouse_button_down(MouseButton::Middle)
-        ^ (is_mouse_button_down(MouseButton::Left) && DrawState::Move == state.draw_state)
+        ^ (is_mouse_button_down(MouseButton::Left) && ToolSelection::Move == state.tool_selection)
     {
         let origin = state.move_origin;
         state.position += origin - pos;
@@ -201,10 +208,21 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.color_edit_button_rgb(&mut state.color);
                 ui.label("");
                 ui.label(format!("cooldown: {}", state.cooldown.round()));
-                if ui.button("Add image").clicked() {
+                ui.label(format!("selected: {}", state.tool_selection));
+                ui.label("");
+                if ui.add(egui::Button::new("brush")).clicked() {
+                    state.tool_selection = ToolSelection::Draw;
+                }
+                if ui.add(egui::Button::new("move tool")).clicked() {
+                    state.tool_selection = ToolSelection::Move;
+                }
+                if ui.add(egui::Button::new("color picker")).clicked() {
+                    state.tool_selection = ToolSelection::ColorPick;
+                }
+                if ui.add(egui::Button::new("add image")).clicked() {
                     state.image = Some(Image::new("happy-ferris.png"));
                 }
-            })
+            });
         });
         state.focus = ctx.is_pointer_over_area();
         state.menu_area = panel.response.rect;
@@ -216,6 +234,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
 impl Default for State {
     fn default() -> Self {
         State {
+            image: None,
             cooldown: 0.0,
             zoom: 3.0,
             focus: false,
@@ -223,8 +242,24 @@ impl Default for State {
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),
-            draw_state: DrawState::Move,
+            tool_selection: ToolSelection::Move,
             menu_area: Rect::NOTHING,
+        }
+    }
+}
+
+impl Display for ToolSelection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ToolSelection::Draw => {
+                write!(f, "brush")
+            }
+            ToolSelection::Move => {
+                write!(f, "move tool")
+            }
+            ToolSelection::ColorPick => {
+                write!(f, "color picker")
+            }
         }
     }
 }
