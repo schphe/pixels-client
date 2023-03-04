@@ -5,6 +5,12 @@ pub struct Color {
     pub b: f32,
 }
 
+impl Default for Color{
+    fn default() -> Self {
+        Self { r: 1.0, g: 1.0, b: 1.0 }
+    }
+}
+
 impl Color {
     pub fn new(r: f32, g: f32, b: f32) -> Self {
         Self { r, g, b }

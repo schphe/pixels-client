@@ -1,7 +1,9 @@
 use client::Client;
+use crate::image::Image;
 use pixels_util::{color::Color, cooldown::Cooldown};
 use prelude::*;
 
+mod image;
 mod client;
 pub mod error;
 pub mod prelude {
@@ -15,8 +17,7 @@ pub mod prelude {
 }
 
 pub struct Canvas {
-    data: Vec<u8>,
-    size: (u64, u64),
+    image: Image,
     client: Client,
     cooldown: Cooldown,
 }
@@ -26,42 +27,35 @@ impl Canvas {
         let mut client = Client::new();
         client.auth(refresh).expect("couldn't get access token");
 
+        let data = client.canvas_pixels().expect("couldn't get canvas pixels");
+        let size = client.canvas_size().expect("couldn't get canvas size");
+        let image = Image::from_vec(data, size);
+
         let mut canvas = Canvas{
-            data: vec![],
-            size: (0, 0),
+            image,
             client,
             cooldown: Cooldown::default()
         };
 
-        canvas.update_size().expect("couldn't update size");
         canvas.update_pixels().expect("couldn't update canvas pixels");
 
         canvas
     }
 
     pub fn width(&self) -> u64 {
-        self.size.0
+        self.image.width()
     }
 
     pub fn height(&self) -> u64 {
-        self.size.1
+        self.image.height()
     }
 
     pub fn size(&self) -> (u64, u64) {
-        self.size
-    }
-
-    pub fn set_size(&mut self, size: (u64, u64)) {
-        self.size = size
+        (self.width(), self.height())
     }
 
     pub fn set_data(&mut self, data: Vec<u8>) {
-        self.data = data;
-    }
-
-    pub fn update_size(&mut self) -> CanvasResult {
-        self.set_size(self.client.canvas_size()?);
-        Ok(())
+        self.image = Image::from_vec(data, self.size());
     }
 
     pub fn update_pixels(&mut self) -> CanvasResult {
@@ -69,21 +63,15 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn pixel(&self, x: u64, y: u64) -> Color {
-        let pos = self.array_position(x, y);
-
-        Color::from_rgb(
-            self.data[pos],
-            self.data[pos+1],
-            self.data[pos+2],
-        )
+    pub fn pixel(&self, x: usize, y: usize) -> Option<&Color> {
+        self.image.get_pixel_color(x, y)
     }
 
     pub fn get_cooldown(&self) -> &Cooldown {
         &self.cooldown
     }
 
-    pub fn set_pixel(&mut self, x: u64, y: u64, color: Color) -> CanvasResult {
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: Color) -> CanvasResult {
         if !self.cooldown.is_ended() {
             return Err(CanvasError::Cooldown(self.cooldown));
         }
@@ -91,19 +79,11 @@ impl Canvas {
         let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color)?;
         if remain == 0 {
             self.cooldown.set(cooldown);
+            self.cooldown.set(cooldown);
         }
 
-        let pos = self.array_position(x, y);
-        let color = color.to_rgb();
-
-        self.data[pos] = color.0;
-        self.data[pos+1] = color.1;
-        self.data[pos+2] = color.2;
+        self.image.set_pixel_color(x, y, color);
 
         Ok(())
-    }
-
-    fn array_position(&self, x: u64, y: u64) -> usize {
-        ((y * self.width() + x) * 3) as usize
     }
 }

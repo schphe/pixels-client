@@ -5,7 +5,6 @@ use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
 use egui_macroquad::egui;
 use clap::Parser;
-use egui_macroquad::egui::Widget;
 
 use pixels_canvas::prelude::*;
 
@@ -127,8 +126,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
         state.move_origin = pos;
 
         if is_key_down(KeyCode::C) {
-            let color = Color::from(state.color);
-            if let Err(e) = container.canvas.set_pixel(pos.x as u64, pos.y as u64, color) {
+            if let Err(e) = container.canvas.set_pixel(pos.x as usize, pos.y as usize, Color::from(state.color)) {
                 match e {
                     CanvasError::ClientError => {
                         panic!("couldn't set pixel");
@@ -140,7 +138,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
             }
         }
         if is_key_down(KeyCode::X) {
-            state.color = container.canvas.pixel(pos.x as u64, pos.y as u64).as_array();
+            state.color = container.canvas.pixel(pos.x as usize, pos.y as usize).unwrap_or(&Color::default()).as_array();
         }
     } else if is_mouse_button_down(MouseButton::Left) {
         let origin = state.move_origin;
@@ -183,7 +181,7 @@ impl Default for State {
             cooldown: 0.0,
             zoom: 3.0,
             focus: true,
-            color: [1.0, 1.0, 1.0],
+            color: [1.0; 3],
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),

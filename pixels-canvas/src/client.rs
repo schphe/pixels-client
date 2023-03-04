@@ -39,7 +39,7 @@ impl Client {
         Ok(buffer)
     }
 
-    pub fn canvas_set_pixel(&self, x: u64, y: u64, color: Color) -> Result<(u32, f32), ureq::Error> {
+    pub fn canvas_set_pixel(&self, x: usize, y: usize, color: Color) -> Result<(u32, f32), ureq::Error> {
         let res = ureq::put("https://pixels.yazilimcilarinmolayeri.com/canvas/pixel")
             .set("Authorization", format!("Bearer {}", self.token.clone()).as_str())
             .send_json(json!({
