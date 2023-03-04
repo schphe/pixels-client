@@ -79,6 +79,7 @@ impl Canvas {
         let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color)?;
         if remain == 0 {
             self.cooldown.set(cooldown);
+            self.cooldown.set(cooldown);
         }
 
         self.image.set_pixel_color(x, y, color);
