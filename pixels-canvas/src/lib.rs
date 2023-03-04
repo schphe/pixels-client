@@ -3,6 +3,7 @@ use crate::image::Image;
 use pixels_util::{color::Color, cooldown::Cooldown};
 use prelude::*;
 
+mod image;
 mod client;
 pub mod image;
 pub mod error;
@@ -31,7 +32,11 @@ impl Canvas {
         let size = client.canvas_size().expect("couldn't get canvas size");
         let image = Image::from_vec(data, size);
 
+<<<<<<< HEAD
         let mut canvas = Canvas{
+=======
+        let mut canvas = Canvas {
+>>>>>>> a0f38c2927986bb29a73595f0804b8cc44c7e207
             image,
             client,
             cooldown: Cooldown::default()
@@ -63,8 +68,13 @@ impl Canvas {
         Ok(())
     }
 
+<<<<<<< HEAD
     pub fn pixel(&self, x: usize, y: usize) -> Option<&Color> {
         self.image.get_pixel_color(x, y)
+=======
+    pub fn pixel(&self, x: usize, y: usize) -> Option<Color> {
+        self.image.get_pixel_color(x, y).map(|color| color.clone())
+>>>>>>> a0f38c2927986bb29a73595f0804b8cc44c7e207
     }
 
     pub fn get_cooldown(&self) -> &Cooldown {
@@ -86,8 +96,11 @@ impl Canvas {
 
         Ok(())
     }
+<<<<<<< HEAD
 
     pub fn replace_part_with_image(&mut self, part_location_x: usize, part_location_y: usize, part_image: &Image){
         self.image.replace_part_with_image(part_location_x, part_location_y, part_image);
     }
+=======
+>>>>>>> a0f38c2927986bb29a73595f0804b8cc44c7e207
 }

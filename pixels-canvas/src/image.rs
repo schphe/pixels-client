@@ -2,18 +2,13 @@ use std::path::Path;
 
 use pixels_util::color::Color;
 
-
-
-
-
-pub struct Image{
+pub struct Image {
     data: Vec<Vec<Color>>,
     size: (u64, u64)
 }
 
-
-impl Image{
-    pub fn new<P: AsRef<Path>>(path: P) -> Self{
+impl Image {
+    pub fn new<P: AsRef<Path>>(path: P) -> Self {
         let image = image::io::Reader::open(path).unwrap().decode().unwrap();
         let size = (image.width() as u64, image.height() as u64);
 
@@ -21,7 +16,7 @@ impl Image{
         let mut x_axis = Vec::with_capacity(size.0 as usize);
 
         for (i, pixel) in image.as_rgb8().unwrap().pixels().into_iter().enumerate() {
-            if i % size.0 as usize == 0 && i >= size.0 as usize{
+            if i % size.0 as usize == 0 && i >= size.0 as usize {
                 y_axis.push(x_axis.clone());
                 x_axis.clear()
             }
@@ -52,7 +47,6 @@ impl Image{
         y_axis.push(x_axis.clone());
         Image { data: y_axis, size }
     }
-
 
     pub fn width(&self) -> u64 {
         self.size.0
