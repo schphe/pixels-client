@@ -31,7 +31,7 @@ impl Canvas {
         let size = client.canvas_size().expect("couldn't get canvas size");
         let image = Image::from_vec(data, size);
 
-        let mut canvas = Canvas{
+        let mut canvas = Canvas {
             image,
             client,
             cooldown: Cooldown::default()
