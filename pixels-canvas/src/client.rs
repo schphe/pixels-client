@@ -1,9 +1,9 @@
+use pixels_util::color::Color;
 use ureq::serde_json::{
     self, json
 };
 use std::io::Read;
 
-use pixels_util::*;
 
 pub struct Client {
     token: String

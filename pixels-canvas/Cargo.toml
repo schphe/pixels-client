@@ -1,10 +1,8 @@
 [package]
 name = "pixels-canvas"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
 pixels-util = { path = "../pixels-util" }
-
 ureq = { version = "2.6.2", features = ["json"] }
-chrono = "0.4.1"

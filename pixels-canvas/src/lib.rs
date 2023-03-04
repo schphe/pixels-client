@@ -1,7 +1,5 @@
-use std::ops::Add;
-use chrono::{DateTime, Duration, Utc};
 use client::Client;
-use pixels_util::*;
+use pixels_util::{color::Color, cooldown::Cooldown};
 use prelude::*;
 
 mod client;
@@ -20,7 +18,7 @@ pub struct Canvas {
     data: Vec<u8>,
     size: (u64, u64),
     client: Client,
-    cooldown: DateTime<Utc>
+    cooldown: Cooldown,
 }
 
 impl Canvas {
@@ -32,7 +30,7 @@ impl Canvas {
             data: vec![],
             size: (0, 0),
             client,
-            cooldown: Utc::now()
+            cooldown: Cooldown::default()
         };
 
         canvas.update_size().expect("couldn't update size");
@@ -81,22 +79,21 @@ impl Canvas {
         )
     }
 
-    fn set_cooldown(&mut self, seconds: f32) {
-        let duration = Duration::milliseconds((seconds * 1000.0) as i64);
-        self.cooldown = Utc::now() + duration;
+    pub fn set_cooldown(&mut self, seconds: f32) {
+        self.cooldown.set_cooldown(seconds);
     }
 
-    fn is_cooldown_ended(&self) -> bool {
-        Utc::now() >= self.cooldown
+    pub fn is_cooldown_ended(&self) -> bool {
+        self.cooldown.is_cooldown_ended()
     }
 
-    fn get_cooldown_secs(&self) -> f32 {
-        (self.cooldown - Utc::now()).num_milliseconds() as f32 / 1000.0
+    pub fn get_cooldown(&self) -> &Cooldown {
+        &self.cooldown
     }
 
     pub fn set_pixel(&mut self, x: u64, y: u64, color: Color) -> CanvasResult {
         if !self.is_cooldown_ended() {
-            return Err(CanvasError::Cooldown(self.get_cooldown_secs()));
+            return Err(CanvasError::Cooldown(self.cooldown));
         }
 
         let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color.clone())?;
