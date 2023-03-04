@@ -46,7 +46,7 @@ pub fn draw(state: Res<State>, container: Res<CanvasContainer>) {
             draw_rectangle(
                 x as f32, y as f32, 1.0, 1.0,
                 convert_color(if state.focus {
-                    container.canvas.pixel(x as usize, y as usize).expect(format!("Unexpected index: (x: {}, y: {})", x, y).as_str()).clone()
+                    *container.canvas.pixel(x as usize, y as usize).unwrap_or_else(|| panic!("Unexpected index: (x: {}, y: {})", x, y))
                 } else {
                     dim_color(container.canvas.pixel(x as usize, y as usize).expect("Unexpected index"))
                 })

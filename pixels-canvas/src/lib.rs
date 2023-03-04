@@ -3,8 +3,8 @@ use crate::image::Image;
 use pixels_util::{color::Color, cooldown::Cooldown};
 use prelude::*;
 
-mod image;
 mod client;
+pub mod image;
 pub mod error;
 pub mod prelude {
     pub use super::{
@@ -85,5 +85,9 @@ impl Canvas {
         self.image.set_pixel_color(x, y, color);
 
         Ok(())
+    }
+
+    pub fn replace_part_with_image(&mut self, part_location_x: usize, part_location_y: usize, part_image: &Image){
+        self.image.replace_part_with_image(part_location_x, part_location_y, part_image);
     }
 }

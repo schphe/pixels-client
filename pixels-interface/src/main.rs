@@ -6,7 +6,7 @@ use bevy_ecs::prelude::*;
 use egui_macroquad::egui;
 use clap::Parser;
 
-use pixels_canvas::prelude::*;
+use pixels_canvas::{prelude::*, image::Image};
 
 use pixels_util::color::Color;
 use canvas::{
@@ -29,6 +29,7 @@ struct App {
 
 #[derive(Resource)]
 pub struct State {
+    image: Option<Image>,
     cooldown: f32,
     zoom: f32,
     focus: bool,
@@ -36,6 +37,21 @@ pub struct State {
     camera: Camera2D,
     position: Vec2,
     move_origin: Vec2,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        State {
+            image: None,
+            cooldown: 0.0,
+            zoom: 3.0,
+            focus: true,
+            color: [1.0; 3],
+            camera: Camera2D::default(),
+            position: vec2(0.0, 0.0),
+            move_origin: vec2(0.0, 0.0),
+        }
+    }
 }
 
 #[macroquad::main("Pixels Client")]
@@ -67,6 +83,7 @@ impl App {
         draw_schedule.add_stage("draw", SystemStage::single_threaded()
             .with_system(canvas::draw.label("canvas"))
             .with_system(draw_settings.after("canvas"))
+            .with_system(draw_image.after("canvas"))
         );
 
         let mut update_schedule = Schedule::default();
@@ -76,6 +93,7 @@ impl App {
             .with_system(update_camera)
             .with_system(canvas::update)
             .with_system(update_cooldown)
+            
         );
 
         world.insert_resource(CanvasContainer::new(canvas));
@@ -83,7 +101,7 @@ impl App {
 
         world.insert_resource(Time::default());
         world.insert_resource(CanvasTimer::new(Timer::new(
-            Duration::from_secs(5), TimerMode::Repeating
+            Duration::from_secs(0), TimerMode::Repeating
         )));
 
         App {
@@ -98,6 +116,13 @@ impl App {
     fn draw(&mut self) {
         clear_background(DARKGRAY);
         self.draw_schedule.run(&mut self.world);
+    }
+}
+
+pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>){
+    let pos = mouse_world_pos(state.camera);
+    if let Some(image) = &state.image{
+        container.canvas.replace_part_with_image(pos.x as usize, pos.y as usize, image);
     }
 }
 
@@ -168,25 +193,14 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.color_edit_button_rgb(&mut state.color);
                 ui.label("");
                 ui.label(format!("cooldown: {}", state.cooldown.round()));
+                if ui.button("Add image").clicked() {
+                    state.image = Some(Image::new("happy-ferris.png"));
+                }
             })
         });
     });
 
     egui_macroquad::draw();
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State {
-            cooldown: 0.0,
-            zoom: 3.0,
-            focus: true,
-            color: [1.0; 3],
-            camera: Camera2D::default(),
-            position: vec2(0.0, 0.0),
-            move_origin: vec2(0.0, 0.0),
-        }
-    }
 }
 
 pub fn calculate_zoom(factor: f32) -> Vec2 {
