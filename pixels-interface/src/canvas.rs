@@ -30,7 +30,7 @@ impl CanvasTimer {
 
 pub fn update(time: Res<Time>, mut timer: ResMut<CanvasTimer>, mut container: ResMut<CanvasContainer>) {
     if timer.instance.tick(time.delta()).finished() {
-      container.canvas.update_pixels().expect("couldn't update canvas pixels");
+        container.canvas.update_pixels().expect("couldn't update canvas pixels");
     }
 }
 
