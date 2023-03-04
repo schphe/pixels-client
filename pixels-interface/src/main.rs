@@ -10,7 +10,6 @@ use egui::emath::Rect;
 use egui_macroquad::egui::Pos2;
 
 use pixels_canvas::{prelude::*, image::Image};
-use pixels_canvas::prelude::*;
 
 use canvas::{CanvasContainer, CanvasTimer};
 use pixels_util::color::Color;
