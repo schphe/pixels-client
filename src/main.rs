@@ -122,10 +122,7 @@ pub fn update_input(mut state: ResMut<State>, mut canvas: ResMut<Canvas>, client
         }
     } else if is_mouse_button_down(MouseButton::Left) {
         let origin = state.move_origin;
-
-        if pos.distance(origin) > 1.0 {
-            state.position += origin - pos;
-        }
+        state.position += origin - pos;
     }
 }
 
