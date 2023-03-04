@@ -17,7 +17,7 @@ impl Cooldown{
     }
 
     fn get_cooldown_secs(&self) -> f32{
-        self.time.and_then(|time| Some((time - Utc::now()).num_milliseconds() as f32 / 1000.0)).unwrap_or(0.0)
+        self.time.and_then(|time| Some(((time - Utc::now()).num_milliseconds() as f32 / 1000.0).max(0.0))).unwrap_or(0.0)
     }
 }
 

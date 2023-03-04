@@ -6,6 +6,8 @@ use bevy_ecs::prelude::*;
 
 use pixels_util::{color::Color, cooldown::Cooldown};
 
+use super::State;
+
 #[derive(Resource)]
 pub struct CanvasContainer {
     pub canvas: Canvas
