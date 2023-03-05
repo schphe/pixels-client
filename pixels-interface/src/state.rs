@@ -1,12 +1,9 @@
-use std::fmt::{
-    Display,
-    Formatter
-};
 use egui_macroquad::egui::Rect;
+use std::fmt::{Display, Formatter};
 
-use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
 use egui_extras::RetainedImage;
+use macroquad::prelude::*;
 
 use pixels_canvas::image::Image;
 
@@ -76,19 +73,23 @@ impl Default for MenuState {
             move_icon: RetainedImage::from_image_bytes(
                 "move_icon",
                 include_bytes!("../../assets/tool-move.png"),
-            ).unwrap(),
+            )
+            .unwrap(),
             brush_icon: RetainedImage::from_image_bytes(
                 "brush_icon",
                 include_bytes!("../../assets/tool-brush.png"),
-            ).unwrap(),
+            )
+            .unwrap(),
             image_icon: RetainedImage::from_image_bytes(
                 "image_icon",
                 include_bytes!("../../assets/tool-image.png"),
-            ).unwrap(),
+            )
+            .unwrap(),
             picker_icon: RetainedImage::from_image_bytes(
                 "picker_icon",
                 include_bytes!("../../assets/tool-picker.png"),
-            ).unwrap(),
+            )
+            .unwrap(),
         }
     }
 }
