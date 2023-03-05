@@ -35,7 +35,7 @@ pub fn draw(mut state: ResMut<State>) {
             ui.label("");
             ui.horizontal(|ui| {
                 ui.label("Zoom:");
-                ui.add(egui::Slider::new(&mut state.zoom, 1.0..=10.0));
+                ui.add(egui::Slider::new(&mut state.camera_state.zoom, 1.0..=10.0));
             });
             ui.label("");
             ui.label(format!("Selected Tool: {}", state.selected_tool));
