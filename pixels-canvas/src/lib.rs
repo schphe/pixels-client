@@ -9,7 +9,12 @@ pub mod error;
 pub mod image;
 mod layer;
 pub mod prelude {
-    pub use super::{error::CanvasError, Canvas};
+    pub use super::{
+        Canvas,
+        error::CanvasError,
+        image::{Image, ColorMode},
+        layer::{Layer, LayerElement},
+    };
 }
 
 pub struct Canvas {

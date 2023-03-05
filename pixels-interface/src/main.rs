@@ -1,25 +1,24 @@
-use bevy_time::{Time, Timer, TimerMode};
-use native_dialog::FileDialog;
-use std::fmt::{Display, Formatter};
-use std::time::Duration;
+use bevy_time::Time;
+use clap::Parser;
 
 use bevy_ecs::prelude::*;
-use clap::Parser;
-use egui::emath::Rect;
-use egui_macroquad::egui::Pos2;
-use egui_macroquad::egui::{self, FontId, RichText};
 use macroquad::prelude::*;
+use pixels_canvas::prelude::*;
 
-use pixels_canvas::{image::Image, prelude::*};
-
-use canvas::{CanvasContainer, CanvasTimer};
-use pixels_util::color::Color;
+use canvas::CanvasContainer;
+use state::{
+    ToolState,
+    State
+};
 
 mod canvas;
+mod input;
+mod panel;
+mod state;
 
 #[derive(Parser)]
 pub struct Args {
-    /// Refresh token to connect the API
+    /// Todo: Refresh token to connect the API
     refresh: String,
 }
 
@@ -29,28 +28,6 @@ struct App {
     update_schedule: Schedule,
 }
 
-#[derive(PartialEq, Eq, Debug)]
-enum ToolState {
-    Draw,
-    Move,
-    ColorPick,
-    PlaceImage,
-}
-
-#[derive(Resource)]
-pub struct State {
-    image: Option<Image>,
-    cooldown: f32,
-    zoom: f32,
-    focus: bool,
-    color: [f32; 3],
-    camera: Camera2D,
-    position: Vec2,
-    move_origin: Vec2,
-    selected_tool: ToolState,
-    menu_area: Rect,
-}
-
 #[macroquad::main("Pixels Client")]
 async fn main() {
     let mut app = App::new(Args::parse(), State::default());
@@ -58,6 +35,7 @@ async fn main() {
     loop {
         app.update();
         app.draw();
+
         next_frame().await
     }
 }
@@ -67,37 +45,30 @@ impl App {
         let canvas = Canvas::new(args.refresh);
         let mut world = World::new();
 
-        request_new_screen_size((canvas.width() * 2) as f32, (canvas.height() * 2) as f32);
+        request_new_screen_size(
+            (canvas.width() * 2) as f32,
+            (canvas.height() * 2) as f32
+        );
         state.position = calculate_center(&canvas);
 
         let mut draw_schedule = Schedule::default();
-        draw_schedule.add_stage(
-            "draw",
-            SystemStage::single_threaded()
-                .with_system(canvas::draw.label("canvas"))
-                .with_system(draw_settings.after("canvas")),
-        );
+        draw_schedule.add_stage("draw", SystemStage::single_threaded());
 
         let mut update_schedule = Schedule::default();
         update_schedule.add_stage(
             "update",
             SystemStage::parallel()
                 .with_system(update_time)
-                .with_system(update_input)
                 .with_system(update_camera)
-                .with_system(canvas::update)
-                .with_system(update_cooldown)
-                .with_system(draw_image),
         );
 
-        world.insert_resource(CanvasContainer::new(canvas));
-        world.insert_resource(state);
+        canvas::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
+        input::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
+        panel::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
 
+        world.insert_resource(CanvasContainer::new(canvas));
         world.insert_resource(Time::default());
-        world.insert_resource(CanvasTimer::new(Timer::new(
-            Duration::from_secs(5),
-            TimerMode::Repeating,
-        )));
+        world.insert_resource(state);
 
         App {
             world,
@@ -116,99 +87,8 @@ impl App {
     }
 }
 
-pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    let pos = mouse_world_pos(state.camera);
-    if let Some(image) = &state.image {
-        container
-            .canvas
-            .replace_part_with_image(pos.x as u64, pos.y as u64, image);
-    }
-}
-
 pub fn update_time(mut time: ResMut<Time>) {
     time.update()
-}
-
-pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>) {
-    state.cooldown = container.canvas.get_cooldown().remaining();
-}
-
-pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    if state
-        .menu_area
-        .contains(Pos2::new(mouse_position().0, mouse_position().1))
-        || state.focus
-    {
-        return;
-    }
-
-    let pos = mouse_world_pos(state.camera);
-
-    state.zoom = (state.zoom + mouse_wheel().1 / 120.0).clamp(1.0, 10.0);
-
-    if is_key_down(KeyCode::M) {
-        state.selected_tool = ToolState::Move;
-    }
-
-    if is_key_down(KeyCode::B) {
-        state.selected_tool = ToolState::Draw;
-    }
-
-    if is_key_down(KeyCode::I) {
-        state.selected_tool = ToolState::ColorPick;
-    }
-
-    if is_key_down(KeyCode::P) {
-        state.move_origin = pos;
-        let path = FileDialog::new()
-            .set_location("~/Desktop")
-            .add_filter("PNG Image", &["png"])
-            .add_filter("JPEG Image", &["jpg", "jpeg"])
-            .show_open_single_file();
-        if let Ok(Some(path)) = path {
-            let image = Image::new(path);
-            container.canvas.get_mut_layers()[1]
-                .add_layer_element((pos.x as u64, pos.y as u64), image);
-        }
-    }
-
-    if is_mouse_button_pressed(MouseButton::Left) {
-        state.move_origin = pos;
-
-        match state.selected_tool {
-            ToolState::Move => {}
-            ToolState::Draw => {
-                if let Err(e) = container.canvas.set_main_pixel(
-                    pos.x as usize,
-                    pos.y as usize,
-                    Color::from(state.color),
-                ) {
-                    match e {
-                        CanvasError::ClientError => {
-                            panic!("couldn't set pixel");
-                        }
-                        CanvasError::Cooldown(cooldown) => {
-                            println!("please wait cooldown to end: {}", cooldown.remaining());
-                        }
-                    }
-                }
-            }
-            ToolState::ColorPick => {
-                state.color = (*container
-                    .canvas
-                    .get_main_pixel(pos.x as usize, pos.y as usize)
-                    .unwrap_or(&Color::default()))
-                .try_into()
-                .expect("Expected RGB found RGBA")
-            }
-            ToolState::PlaceImage => {}
-        }
-    } else if is_mouse_button_down(MouseButton::Middle)
-        ^ (is_mouse_button_down(MouseButton::Left) && ToolState::Move == state.selected_tool)
-    {
-        let origin = state.move_origin;
-        state.position += origin - pos;
-    }
 }
 
 pub fn update_camera(mut state: ResMut<State>) {
@@ -218,92 +98,6 @@ pub fn update_camera(mut state: ResMut<State>) {
         ..Default::default()
     };
     set_camera(&state.camera);
-}
-
-pub fn draw_settings(mut state: ResMut<State>) {
-    egui_macroquad::ui(|ctx| {
-        let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.label("");
-                ui.label(RichText::new("Pixels Client Settings").font(FontId::proportional(16.0)));
-            });
-            ui.label("");
-            ui.horizontal(|ui| {
-                ui.label("Color:");
-                ui.color_edit_button_rgb(&mut state.color);
-            });
-            ui.label("");
-            ui.horizontal(|ui| {
-                ui.label("Zoom:");
-                ui.add(egui::Slider::new(&mut state.zoom, 1.0..=10.0));
-            });
-            ui.label("");
-            ui.label(format!("Selected Tool: {}", state.selected_tool));
-            ui.horizontal(|ui| {
-                if ui.add(egui::Button::new("brush")).clicked() {
-                    state.selected_tool = ToolState::Draw;
-                }
-                if ui.add(egui::Button::new("move tool")).clicked() {
-                    state.selected_tool = ToolState::Move;
-                }
-                if ui.add(egui::Button::new("color picker")).clicked() {
-                    state.selected_tool = ToolState::ColorPick;
-                }
-                if ui.add(egui::Button::new("add image")).clicked() {
-                    state.selected_tool = ToolState::PlaceImage;
-                    state.image = state
-                        .image
-                        .is_none()
-                        .then(|| Image::new("./assets/happy-ferris.png"));
-                }
-            });
-            ui.add_space(ui.available_height() - 20.0);
-            ui.horizontal(|ui| {
-                ui.label("Cooldown: ");
-                ui.label(RichText::new(state.cooldown.round().to_string()).strong());
-            });
-        });
-        state.focus = ctx.is_pointer_over_area();
-        state.menu_area = panel.response.rect;
-    });
-
-    egui_macroquad::draw();
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State {
-            image: None,
-            cooldown: 0.0,
-            zoom: 3.0,
-            focus: false,
-            color: [1.0; 3],
-            camera: Camera2D::default(),
-            position: vec2(0.0, 0.0),
-            move_origin: vec2(0.0, 0.0),
-            selected_tool: ToolState::Move,
-            menu_area: Rect::NOTHING,
-        }
-    }
-}
-
-impl Display for ToolState {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Draw => {
-                write!(f, "Brush")
-            }
-            Self::Move => {
-                write!(f, "Move Tool")
-            }
-            Self::ColorPick => {
-                write!(f, "Color Picker")
-            }
-            Self::PlaceImage => {
-                write!(f, "Image Placer")
-            }
-        }
-    }
 }
 
 pub fn calculate_zoom(factor: f32) -> Vec2 {
