@@ -14,9 +14,10 @@ pub mod prelude {
 }
 
 pub struct Canvas {
-    image: Image,
     client: Client,
     cooldown: Cooldown,
+    first_layer: Image,
+    second_layer: Image,
 }
 
 impl Canvas {
@@ -26,12 +27,12 @@ impl Canvas {
 
         let data = client.canvas_pixels().expect("couldn't get canvas pixels");
         let size = client.canvas_size().expect("couldn't get canvas size");
-        let image = Image::from_vec(data, size);
 
         let mut canvas = Canvas {
-            image,
             client,
             cooldown: Cooldown::default(),
+            first_layer: Image::from_vec(data.clone(), size),
+            second_layer: Image::from_vec(data, size),
         };
 
         canvas
@@ -42,11 +43,11 @@ impl Canvas {
     }
 
     pub fn width(&self) -> u64 {
-        self.image.width()
+        self.first_layer.width()
     }
 
     pub fn height(&self) -> u64 {
-        self.image.height()
+        self.first_layer.height()
     }
 
     pub fn size(&self) -> (u64, u64) {
@@ -54,7 +55,7 @@ impl Canvas {
     }
 
     pub fn set_data(&mut self, data: Vec<u8>) {
-        self.image = Image::from_vec(data, self.size());
+        self.first_layer = Image::from_vec(data, self.size());
     }
 
     pub fn update_pixels(&mut self) -> CanvasResult {
@@ -63,7 +64,7 @@ impl Canvas {
     }
 
     pub fn pixel(&self, x: usize, y: usize) -> Option<Color> {
-        self.image.get_pixel_color(x, y).map(|color| color.clone())
+        self.first_layer.get_pixel_color(x, y).map(|color| color.clone())
     }
 
     pub fn get_cooldown(&self) -> &Cooldown {
@@ -81,12 +82,12 @@ impl Canvas {
             self.cooldown.set(cooldown);
         }
 
-        self.image.set_pixel_color(x, y, color);
+        self.first_layer.set_pixel_color(x, y, color);
 
         Ok(())
     }
 
     pub fn replace_part_with_image(&mut self, part_location_x: usize, part_location_y: usize, part_image: &Image){
-        self.image.replace_part_with_image(part_location_x, part_location_y, part_image);
+        self.first_layer.replace_part_with_image(part_location_x, part_location_y, part_image);
     }
 }
