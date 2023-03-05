@@ -40,30 +40,35 @@ pub fn update(
     if timer.instance.tick(time.delta()).finished() {
         container
             .canvas
-            .update_pixels()
+            .update_main_pixels()
             .expect("couldn't update canvas pixels");
     }
 }
 
 pub fn draw(container: Res<CanvasContainer>) {
-    for y in 0..container.canvas.height() {
-        for x in 0..container.canvas.width() {
-            draw_rectangle(
-                x as f32,
-                y as f32,
-                1.0,
-                1.0,
-                convert_color(
-                    container
-                        .canvas
-                        .pixel(x as usize, y as usize)
-                        .expect(format!("Unexpected index: (x: {}, y: {})", x, y).as_str()),
-                ),
-            );
+    for layer in container.canvas.get_layers() {
+        for layer_element in layer.get_layer_elements() {
+            let (x_position, y_position) = layer_element.get_position();
+            for (y, y_pixels) in layer_element.get_pixels().iter().enumerate() {
+                for (x, x_pixel) in y_pixels.iter().enumerate() {
+                    let (x_position, y_position) = (x_position + x as u64, y_position + y as u64);
+                    if x_position < container.canvas.width()
+                        && y_position < container.canvas.height()
+                    {
+                        draw_rectangle(
+                            x_position as f32,
+                            y_position as f32,
+                            1.0,
+                            1.0,
+                            convert_color(x_pixel),
+                        );
+                    }
+                }
+            }
         }
     }
 }
 
-pub fn convert_color(color: Color) -> macroquad::color::Color {
-    macroquad::color::Color::new(color.r, color.g, color.b, 255.0)
+pub fn convert_color(color: &Color) -> macroquad::color::Color {
+    macroquad::color::Color::from(color.to_rgba_array())
 }

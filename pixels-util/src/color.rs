@@ -1,55 +1,99 @@
+use std::fmt::Display;
+
 #[derive(Copy, Clone)]
-pub struct Color {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
+pub enum Color {
+    RGBA([f32; 4]),
+    RGB([f32; 3]),
 }
 
-impl Default for Color{
+impl Default for Color {
     fn default() -> Self {
-        Self { r: 1.0, g: 1.0, b: 1.0 }
+        Color::RGB([1.0; 3])
+    }
+}
+
+impl From<[f32; 3]> for Color {
+    fn from(value: [f32; 3]) -> Self {
+        Color::RGB(value)
+    }
+}
+
+impl From<[f32; 4]> for Color {
+    fn from(value: [f32; 4]) -> Self {
+        Color::RGBA(value)
+    }
+}
+
+impl TryFrom<&[u8]> for Color {
+    type Error = ();
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        if let [r, g, b, a] = value {
+            Ok(Color::new_rgba(
+                *r as f32 / 255.0,
+                *g as f32 / 255.0,
+                *b as f32 / 255.0,
+                *a as f32 / 255.0,
+            ))
+        } else if let [r, g, b] = value {
+            Ok(Color::new_rgb(
+                *r as f32 / 255.0,
+                *g as f32 / 255.0,
+                *b as f32 / 255.0,
+            ))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<Color> for [f32; 3] {
+    type Error = ();
+
+    fn try_from(value: Color) -> Result<Self, Self::Error> {
+        match value {
+            Color::RGBA(_) => Err(()),
+            Color::RGB(array) => Ok(array),
+        }
     }
 }
 
 impl Color {
-    pub fn new(r: f32, g: f32, b: f32) -> Self {
-        Self { r, g, b }
+    pub fn new_rgb(r: f32, g: f32, b: f32) -> Self {
+        Color::RGB([r, g, b])
     }
 
-    pub fn from(colors: [f32; 3]) -> Self {
-        Self::new(colors[0], colors[1], colors[2])
+    pub fn new_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
+        Color::RGBA([r, g, b, a])
     }
 
-    pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
-        Self::new(
-            r as f32 / 255.0,
-            g as f32 / 255.0,
-            b as f32 / 255.0,
+    pub fn to_rgba_array(&self) -> [f32; 4] {
+        match self {
+            Color::RGBA(array) => *array,
+            Color::RGB([r, g, b]) => [*r, *g, *b, 255.0],
+        }
+    }
+}
+
+impl Display for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Color::RGBA(value) => format!(
+                    "{:02x}{:02x}{:02x}{:02x}",
+                    (value[0] * 255.0) as u8,
+                    (value[1] * 255.0) as u8,
+                    (value[2] * 255.0) as u8,
+                    (value[3] * 255.0) as u8
+                ),
+                Color::RGB(value) => format!(
+                    "{:02x}{:02x}{:02x}",
+                    (value[0] * 255.0) as u8,
+                    (value[1] * 255.0) as u8,
+                    (value[2] * 255.0) as u8
+                ),
+            }
         )
-    }
-
-    pub fn to_rgb(&self) -> (u8, u8, u8) {
-        (
-            (self.r * 255.0) as u8,
-            (self.g * 255.0) as u8,
-            (self.b * 255.0) as u8
-        )
-    }
-
-    pub fn to_hex(&self) -> String {
-        format!(
-            "{:02x}{:02x}{:02x}",
-            (self.r * 255.0) as u8,
-            (self.g * 255.0) as u8,
-            (self.b * 255.0) as u8
-        )
-    }
-
-    pub fn as_array(&self) -> [f32; 3] {
-        [
-            self.r,
-            self.g,
-            self.b
-        ]
     }
 }
