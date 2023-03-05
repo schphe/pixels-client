@@ -78,6 +78,7 @@ pub fn draw(container: Res<CanvasContainer>) {
     for layer in container.canvas.get_layers() {
         for layer_element in layer.get_layer_elements() {
             let (x_pos, y_pos) = layer_element.get_position();
+
             for (y, y_pixels) in layer_element.get_pixels().iter().enumerate() {
                 for (x, x_pixel) in y_pixels.iter().enumerate() {
                     let (x_pos, y_pos) = (x_pos + x as u64, y_pos + y as u64);
@@ -86,7 +87,12 @@ pub fn draw(container: Res<CanvasContainer>) {
                         continue;
                     }
 
-                    draw_rectangle(x_pos as f32, y_pos as f32, 1.0, 1.0, convert_color(x_pixel));
+                    draw_rectangle(
+                        x_pos as f32,
+                        y_pos as f32,
+                        1.0, 1.0,
+                        convert_color(x_pixel)
+                    );
                 }
             }
         }
