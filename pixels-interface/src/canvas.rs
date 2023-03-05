@@ -74,7 +74,7 @@ pub fn update(
     }
 }
 
-pub fn draw(container: Res<CanvasContainer>) {
+pub fn draw(state: Res<State>, container: Res<CanvasContainer>) {
     for layer in container.canvas.get_layers() {
         for layer_element in layer.get_layer_elements() {
             let (x_pos, y_pos) = layer_element.get_position();
@@ -87,7 +87,16 @@ pub fn draw(container: Res<CanvasContainer>) {
                         continue;
                     }
 
-                    draw_rectangle(x_pos as f32, y_pos as f32, 1.0, 1.0, convert_color(x_pixel));
+                    draw_rectangle(
+                        x_pos as f32,
+                        y_pos as f32,
+                        1.0, 1.0,
+                        convert_color(if state.cooldown != 0.0 {
+                            x_pixel.clone()
+                        } else {
+                            dim_color(x_pixel)
+                        })
+                    );
                 }
             }
         }
@@ -103,6 +112,11 @@ pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>) 
     }
 }
 
-pub fn convert_color(color: &Color) -> macroquad::color::Color {
+pub fn dim_color(color: &Color) -> Color {
+    let [r, g, b, _] = color.to_rgba_array();
+    Color::new_rgb(r * 0.5, g * 0.5, b * 0.5)
+}
+
+pub fn convert_color(color: Color) -> macroquad::color::Color {
     macroquad::color::Color::from(color.to_rgba_array())
 }
