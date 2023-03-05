@@ -12,6 +12,8 @@ use super::{
     State,
 };
 
+use crate::add_tool_button;
+
 pub fn register_systems(_world: &mut World, _update_schedule: &mut Schedule, draw_schedule: &mut Schedule) {
     draw_schedule.add_stage(
         "draw_settings",
@@ -40,22 +42,22 @@ pub fn draw(mut state: ResMut<State>) {
             ui.label("");
             ui.label(format!("Selected Tool: {}", state.selected_tool));
             ui.horizontal(|ui| {
-                if ui.add(egui::Button::new("brush")).clicked() {
-                    state.selected_tool = ToolState::Draw;
-                }
-                if ui.add(egui::Button::new("move tool")).clicked() {
+                add_tool_button!(ctx, ui, state, state.menu_state.move_icon, ToolState::Move, {
                     state.selected_tool = ToolState::Move;
-                }
-                if ui.add(egui::Button::new("color picker")).clicked() {
-                    state.selected_tool = ToolState::ColorPick;
-                }
-                if ui.add(egui::Button::new("add image")).clicked() {
-                    state.selected_tool = ToolState::PlaceImage;
+                });
+                add_tool_button!(ctx, ui, state, state.menu_state.brush_icon, ToolState::Draw, {
+                    state.selected_tool = ToolState::Draw;
+                });
+                add_tool_button!(ctx, ui, state, state.menu_state.picker_icon, ToolState::Pick, {
+                    state.selected_tool = ToolState::Pick;
+                });
+                add_tool_button!(ctx, ui, state, state.menu_state.image_icon, ToolState::Place, {
+                    state.selected_tool = ToolState::Place;
                     state.image = state
                         .image
                         .is_none()
                         .then(|| Image::new("./assets/happy-ferris.png"));
-                }
+                });
             });
             ui.add_space(ui.available_height() - 20.0);
             ui.horizontal(|ui| {
@@ -68,4 +70,22 @@ pub fn draw(mut state: ResMut<State>) {
     });
 
     egui_macroquad::draw();
+}
+
+#[macro_export]
+macro_rules! add_tool_button {
+    ($ctx:expr, $ui:expr, $state:expr, $icon:expr, $tool:expr, $body:block) => {{
+        let button = $ui.add(egui::ImageButton::new(
+            $icon.texture_id($ctx),
+            $icon.size_vec2() / 5.0,
+        ));
+
+        if $state.selected_tool == $tool {
+            button.clone().highlight();
+        }
+
+        if button.clicked() {
+            $body
+        }
+    }};
 }

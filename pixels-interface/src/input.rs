@@ -89,14 +89,14 @@ pub fn update_tool_draw(mut state: ResMut<State>, mut container: ResMut<CanvasCo
 
 pub fn update_tool_pick(mut state: ResMut<State>, container: ResMut<CanvasContainer>) {
     if is_key_down(KeyCode::I) {
-        state.selected_tool = ToolState::ColorPick;
+        state.selected_tool = ToolState::Pick;
     }
 
     if !is_mouse_button_pressed(MouseButton::Left) {
         return;
     }
 
-    if let ToolState::ColorPick = state.selected_tool {
+    if let ToolState::Pick = state.selected_tool {
         let pos = super::mouse_world_pos(state.camera_state.instance);
 
         state.color = (*container
