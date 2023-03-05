@@ -19,8 +19,6 @@ impl Image {
         let mut data = Vec::with_capacity(size.1 as usize);
         let mut row = Vec::with_capacity(size.0 as usize);
 
-        let row_size = size.0 as usize;
-
         for chunk in raw_data.chunks_exact(3) {
             row.push(Color::from_rgb(
                 chunk[0],
@@ -28,7 +26,7 @@ impl Image {
                 chunk[2],
             ));
 
-            if row.len() == row_size {
+            if row.len() == (size.0 as usize) {
                 data.push(row.clone());
                 row.clear();
             }
