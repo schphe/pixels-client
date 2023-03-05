@@ -1,4 +1,4 @@
-use egui_macroquad::egui::{self, FontId, RichText};
+use egui_macroquad::egui::{self, RichText};
 
 use bevy_ecs::prelude::*;
 use pixels_canvas::prelude::*;

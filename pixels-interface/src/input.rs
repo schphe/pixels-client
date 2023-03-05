@@ -10,26 +10,16 @@ use pixels_canvas::image::Image;
 use pixels_util::color::Color;
 use rfd::FileDialog;
 
-pub fn register_systems(
-    _world: &mut World,
-    update_schedule: &mut Schedule,
-    _draw_schedule: &mut Schedule,
-) {
+pub fn register_systems(_world: &mut World, update_schedule: &mut Schedule, _draw_schedule: &mut Schedule) {
     update_schedule.add_stage(
         "update_input",
         SystemStage::single_threaded()
-            .with_system(update_zoom)
-            .with_run_criteria(run_if_not_focus)
-            .with_system(update_mouse)
-            .with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_move)
-            .with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_draw)
-            .with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_pick)
-            .with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_place)
-            .with_run_criteria(run_if_not_focus),
+            .with_system(update_zoom).with_run_criteria(run_if_not_focus)
+            .with_system(update_mouse).with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_move).with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_draw).with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_pick).with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_place).with_run_criteria(run_if_not_focus)
     );
 }
 
