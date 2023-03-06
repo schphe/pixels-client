@@ -26,31 +26,22 @@ pub fn draw(mut state: ResMut<State>) {
     egui_macroquad::ui(|ctx| {
         let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                ui.label("");
-                ui.label(RichText::new("Pixels Client Settings").font(FontId::proportional(16.0)));
-            });
-            ui.label("");
-            ui.horizontal(|ui| {
-                ui.label("Color:");
+                ui.set_width(0.0);
+                ui.add_space(20.0);
                 ui.color_edit_button_rgb(&mut state.color);
-            });
-            ui.label("");
-            ui.horizontal(|ui| {
-                ui.label("Zoom:");
-                ui.add(egui::Slider::new(&mut state.camera_state.zoom, 1.0..=10.0));
-            });
-            ui.label("");
-            ui.label(format!("Selected Tool: {}", state.selected_tool));
-            ui.horizontal(|ui| {
+                ui.add_space(5.0);
                 add_tool_button!(ctx, ui, state, state.menu_state.move_icon, ToolState::Move, {
                     state.selected_tool = ToolState::Move;
                 });
+                ui.add_space(5.0);
                 add_tool_button!(ctx, ui, state, state.menu_state.brush_icon, ToolState::Draw, {
                     state.selected_tool = ToolState::Draw;
                 });
+                ui.add_space(5.0);
                 add_tool_button!(ctx, ui, state, state.menu_state.picker_icon, ToolState::Pick, {
                     state.selected_tool = ToolState::Pick;
                 });
+                ui.add_space(5.0);
                 add_tool_button!(ctx, ui, state, state.menu_state.image_icon, ToolState::Place, {
                     state.selected_tool = ToolState::Place;
                     state.image = state
@@ -58,10 +49,7 @@ pub fn draw(mut state: ResMut<State>) {
                         .is_none()
                         .then(|| Image::new("./assets/happy-ferris.png"));
                 });
-            });
-            ui.add_space(ui.available_height() - 20.0);
-            ui.horizontal(|ui| {
-                ui.label("Cooldown: ");
+                ui.add_space(5.0);
                 ui.label(RichText::new(state.cooldown.round().to_string()).strong());
             });
         });
