@@ -15,7 +15,6 @@ use crate::{
 
 struct ToolButton {
     selected: bool,
-    tool: ToolType,
     icon: TextureId,
     size: Vec2,
 }
@@ -49,10 +48,9 @@ pub fn draw(world: &mut World) {
 }
 
 impl ToolButton {
-    fn new(selected: bool, tool: ToolType, icon: TextureId, size: Vec2) -> Self {
+    fn new(selected: bool, icon: TextureId, size: Vec2) -> Self {
         Self {
             selected,
-            tool,
             icon,
             size,
         }
@@ -85,7 +83,7 @@ macro_rules! panel {
             let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
                     ui.set_width(0.0);
-                    $body(ctx, ui, state)
+                    $body(ctx, ui, &mut state)
                 });
             });
 
@@ -101,7 +99,7 @@ macro_rules! panel {
 macro_rules! tool_button {
     ($ctx:expr, $ui:expr, $state:expr, $tool:expr, $icon:expr, $body:block) => {{
         let button = $ui.add(ToolButton::new(
-            $state.selected_tool == $tool, $tool, $icon.texture_id($ctx), $icon.size_vec2()
+            $state.selected_tool == $tool, $icon.texture_id($ctx), $icon.size_vec2()
         ));
 
         if button.clicked() {
