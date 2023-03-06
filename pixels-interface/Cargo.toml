@@ -9,6 +9,7 @@ pixels-util = { path = "../pixels-util" }
 
 clap = { version = "4.1.8", features = ["derive"] }
 egui-macroquad = "0.15.0"
+egui_extras = { version = "0.21.0", features = ["image"] }
 macroquad = "0.3.25"
 bevy_time = "0.9.1"
 bevy_ecs = "0.9.1"

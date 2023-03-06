@@ -100,7 +100,7 @@ pub fn draw(container: Res<CanvasContainer>) {
 }
 
 pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    let pos = super::mouse_world_pos(state.camera);
+    let pos = super::mouse_world_pos(state.camera_state.instance);
     if let Some(image) = &state.image {
         container
             .canvas
