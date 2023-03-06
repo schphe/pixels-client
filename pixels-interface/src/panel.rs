@@ -1,4 +1,4 @@
-use egui_macroquad::egui::{self, Response, RichText, TextureId, Widget, Vec2, Ui, Context};
+use egui_macroquad::egui::{self, Response, TextureId, Widget, Vec2, Ui, Context, show_tooltip_at_pointer, Id};
 
 use bevy_ecs::prelude::*;
 
@@ -39,11 +39,6 @@ pub fn draw(world: &mut World) {
         tool_button_if!(ctx, ui, state, ToolType::Placer, state.menu_state.image_icon, {
             state.selected_tool = ToolType::Placer;
         }, state.image.is_some());
-
-        ui.add_space(5.0);
-        ui.label(RichText::new(
-            state.cooldown.round().to_string()
-        ).strong());
     });
 }
 
@@ -80,6 +75,12 @@ macro_rules! panel {
         let mut state = res.as_mut();
 
         egui_macroquad::ui(|ctx| {
+            if state.cooldown != 0.0 {
+                show_tooltip_at_pointer(ctx, Id::new("cooldown"), |ui| {
+                    ui.label(format!("please wait {} secs", state.cooldown.round()));
+                });
+            }
+
             let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
                     ui.set_width(0.0);
