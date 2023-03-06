@@ -62,7 +62,7 @@ impl Canvas {
     }
 
     pub fn get_cooldown(&self) -> f32 {
-        return self.cooldown.remaining()
+        self.cooldown.remaining()
     }
 
     fn add_layer(&mut self, layer: Layer) {
@@ -106,7 +106,7 @@ impl Canvas {
             return Err(CanvasError::Cooldown(self.get_cooldown()))
         }
 
-        self.get_main_layer_mut().set_pixel(x, y, color.clone());
+        self.get_main_layer_mut().set_pixel(x, y, color);
         let (remain, delay) = self.client.canvas_set_pixel(x, y, color)?;
 
         if remain == 0 {

@@ -143,5 +143,5 @@ fn get_element() -> Option<Element> {
         .add_filter("JPEG Image", &["jpg", "jpeg"])
         .set_directory("~")
         .pick_file();
-    path.map(|p| Element::new(p))
+    path.map(Element::new)
 }

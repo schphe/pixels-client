@@ -1,6 +1,6 @@
 use std::path::Path;
 use image::io::Reader;
-use image::{EncodableLayout, GenericImageView};
+use image::GenericImageView;
 
 use super::prelude::*;
 
@@ -57,10 +57,9 @@ impl Pixels {
     }
 
     pub fn get(&self, x: u32, y: u32) -> Option<Color> {
-        Some(self.data
+        Some(*self.data
             .get(y as usize)?
-            .get(x as usize)?
-            .clone())
+            .get(x as usize)?)
     }
 
     pub fn set(&mut self, x: u32, y: u32, color: Color) {

@@ -70,7 +70,7 @@ pub fn update_tool_draw(mut state: ResMut<State>, mut container: ResMut<CanvasCo
                     panic!("couldn't set pixel");
                 }
                 CanvasError::Cooldown(cooldown) => {
-                    println!("please wait cooldown to end: {}", cooldown);
+                    println!("please wait cooldown to end: {cooldown}");
                 }
             }
         }
