@@ -1,10 +1,18 @@
-use bevy_time::{Time, Timer};
+use std::time::Duration;
+
+use bevy_time::{
+    Time,
+    Timer,
+    TimerMode
+};
 
 use bevy_ecs::prelude::*;
 use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
-use pixels_util::{color::Color, cooldown::Cooldown};
+use pixels_util::color::Color;
+
+use super::State;
 
 #[derive(Resource)]
 pub struct CanvasContainer {
@@ -14,10 +22,6 @@ pub struct CanvasContainer {
 impl CanvasContainer {
     pub fn new(canvas: Canvas) -> Self {
         Self { canvas }
-    }
-
-    pub fn get_cooldown(&self) -> &Cooldown {
-        self.canvas.get_cooldown()
     }
 }
 
@@ -30,6 +34,31 @@ impl CanvasTimer {
     pub fn new(timer: Timer) -> Self {
         Self { instance: timer }
     }
+}
+
+pub fn register_systems(world: &mut World, _update_schedule: &mut Schedule, draw_schedule: &mut Schedule) {
+    draw_schedule.add_stage(
+        "draw_canvas",
+        SystemStage::single_threaded()
+            .with_system(draw.label("canvas_draw"))
+            .with_system(draw_image)
+    );
+
+    draw_schedule.add_stage(
+        "update_canvas",
+        SystemStage::single_threaded()
+            .with_system(update_cooldown)
+            .with_system(update)
+    );
+
+    world.insert_resource(CanvasTimer::new(Timer::new(
+        Duration::from_secs(5),
+        TimerMode::Repeating,
+    )));
+}
+
+pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>) {
+    state.cooldown = container.canvas.get_cooldown().remaining();
 }
 
 pub fn update(
@@ -66,6 +95,15 @@ pub fn draw(container: Res<CanvasContainer>) {
                 }
             }
         }
+    }
+}
+
+pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
+    let pos = super::mouse_world_pos(state.camera);
+    if let Some(image) = &state.image {
+        container
+            .canvas
+            .replace_part_with_image(pos.x as u64, pos.y as u64, image);
     }
 }
 
