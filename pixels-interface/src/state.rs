@@ -3,15 +3,14 @@ use egui_extras::RetainedImage;
 
 use bevy_ecs::prelude::*;
 use macroquad::prelude::*;
-
-use pixels_canvas::image::Image;
+use pixels_canvas::prelude::*;
 
 #[derive(Resource)]
 pub struct State {
     pub focus: bool,
     pub color: [f32; 3],
     pub cooldown: f32,
-    pub image: Option<Image>,
+    pub image: Option<Element>,
     pub selected_tool: ToolType,
     pub camera_state: CameraState,
     pub menu_state: MenuState,
@@ -41,7 +40,7 @@ pub enum ToolType {
 }
 
 impl State {
-    pub fn new(image: Option<Image>) -> Self {
+    pub fn new(image: Option<Element>) -> Self {
         State {
             image,
             focus: false,

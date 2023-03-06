@@ -1,130 +1,137 @@
-use crate::image::{ColorMode, Image};
-use client::Client;
-use layer::Layer;
-use pixels_util::{color::Color, cooldown::Cooldown};
+use paste::item;
+
+use pixels_util::prelude::*;
 use prelude::*;
 
 mod client;
-pub mod error;
-pub mod image;
 mod layer;
+mod error;
+mod elem;
+
 pub mod prelude {
-    pub use super::{
+    pub use crate::{
         Canvas,
+        layer::{
+            Layer,
+
+        },
+        elem::Element,
+        client::Client,
         error::CanvasError,
-        image::{Image, ColorMode},
-        layer::{Layer, LayerElement},
     };
 }
 
 pub struct Canvas {
-    layers: Vec<Layer>,
     client: Client,
+    layers: Vec<Layer>,
     cooldown: Cooldown,
+    size: (u32, u32),
 }
 
 impl Canvas {
-    pub fn new(refresh: String) -> Canvas {
+    pub fn new(refresh: String) -> Result<Self, CanvasError> {
         let mut client = Client::new();
-        client.auth(refresh).expect("couldn't get access token");
 
-        let data = client.canvas_pixels().expect("couldn't get canvas pixels");
-        let size = client.canvas_size().expect("couldn't get canvas size");
+        client.auth(refresh)?;
 
-        let canvas_layer = Layer::from(Image::from_vec(data, size, ColorMode::RGB));
-        let image_layer = Layer::new(size);
-
-        let mut canvas = Canvas {
-            layers: vec![canvas_layer, image_layer],
+        let mut canvas = Self {
+            size: client.canvas_size()?,
+            cooldown: Cooldown::new(),
+            layers: vec![],
             client,
-            cooldown: Cooldown::default(),
         };
 
-        canvas
-            .update_main_pixels()
-            .expect("couldn't update canvas pixels");
+        canvas.add_layer(Layer::new(canvas.size(), 1.0));
+        canvas.add_layer(Layer::new(canvas.size(), 0.5));
 
-        canvas
+        canvas.update_main_layer()?;
+
+        Ok(canvas)
     }
 
-    pub fn width(&self) -> u64 {
-        self.layers[0].get_size().0
+    pub fn width(&self) -> u32 {
+        self.size.0
     }
 
-    pub fn height(&self) -> u64 {
-        self.layers[0].get_size().1
+    pub fn height(&self) -> u32 {
+        self.size.1
     }
 
-    pub fn size(&self) -> (u64, u64) {
+    pub fn size(&self) -> (u32, u32) {
         (self.width(), self.height())
     }
 
-    pub fn get_layers(&self) -> &Vec<Layer> {
-        &self.layers
+    pub fn get_cooldown(&self) -> f32 {
+        return self.cooldown.remaining()
     }
 
-    pub fn get_mut_layers(&mut self) -> &mut Vec<Layer> {
-        &mut self.layers
+    fn add_layer(&mut self, layer: Layer) {
+        self.layers.push(layer)
     }
 
-    pub fn set_main_data(&mut self, raw_data: Vec<u8>, size: (u64, u64)) {
-        self.layers[0]
-            .get_mut_layer_element(0)
-            .unwrap()
-            .set_raw_data(raw_data, size);
+    pub fn get_layer(&self, id: usize) -> Option<&Layer> {
+        self.layers.get(id)
     }
 
-    pub fn update_main_pixels(&mut self) -> Result<(), CanvasError> {
-        self.set_main_data(self.client.canvas_pixels()?, self.size());
+    pub fn get_layer_mut(&mut self, id: usize) -> Option<&mut Layer> {
+        self.layers.get_mut(id)
+    }
+
+    layer_accessors!(main, 0);
+    layer_accessors!(image, 1);
+
+    pub fn get_layers_merged(&self) -> Layer {
+        self.layers.iter().fold(
+            Layer::new(self.size, 1.0),
+            |l, o| l.overlay(o),
+        )
+    }
+
+    pub fn update_main_layer(&mut self) -> Result<(), CanvasError> {
+        let pixels = self.client.canvas_pixels()?;
+        let size = self.size;
+
+        self.get_main_layer_mut().set_pixels(
+            Pixels::from_buffer(
+                size,
+                pixels,
+                ColorMode::RGB,
+            )
+        );
         Ok(())
     }
 
-    pub fn get_main_pixel(&self, x: usize, y: usize) -> Option<&Color> {
-        self.layers[0].get_layer_element(0).unwrap().get_pixel(x, y)
-    }
-
-    pub fn get_cooldown(&self) -> &Cooldown {
-        &self.cooldown
-    }
-
-    pub fn set_main_pixel(&mut self, x: usize, y: usize, color: Color) -> Result<(), CanvasError> {
+    pub fn set_pixel(&mut self, x: u32, y: u32, color: Color) -> Result<(), CanvasError> {
         if !self.cooldown.is_ended() {
-            return Err(CanvasError::Cooldown(self.cooldown));
+            return Err(CanvasError::Cooldown(self.get_cooldown()))
         }
 
-        let (remain, cooldown) = self.client.canvas_set_pixel(x, y, color)?;
+        self.get_main_layer_mut().set_pixel(x, y, color.clone());
+        let (remain, delay) = self.client.canvas_set_pixel(x, y, color)?;
+
         if remain == 0 {
-            self.cooldown.set(cooldown);
-            self.cooldown.set(cooldown);
+            self.cooldown.set(delay)
         }
-
-        *self.layers[0]
-            .get_mut_layer_element(0)
-            .unwrap()
-            .get_mut_pixel(x, y)
-            .unwrap() = color;
 
         Ok(())
     }
 
-    pub fn replace_part_with_image(
-        &mut self,
-        part_location_x: u64,
-        part_location_y: u64,
-        part_image: &Image,
-    ) {
-        if let Some(layer_element) = self.layers[1].get_mut_layer_element(0) {
-            layer_element.set_data(part_image.clone());
-            layer_element.set_position((part_location_x, part_location_y));
-        } else {
-            self.layers[1]
-                .add_layer_element((part_location_x, part_location_y), part_image.clone());
-        }
+    pub fn get_pixel(&self, x: u32, y: u32) -> Option<Color> {
+        self.get_main_layer().get_pixel(x, y)
     }
+}
 
-    pub fn remove_part_image(&mut self) {
-        if let Some(layer_element) = self.layers[1].get_mut_layer_element(0) {
-            layer_element.set_data(Image::from_vec(Vec::new(), (0, 0), ColorMode::RGB));
+#[macro_export]
+macro_rules! layer_accessors {
+    ($name:ident, $id:expr) => {
+        item! {
+            pub fn [<get_ $name _layer>](&self) -> &Layer {
+                self.layers.get($id).unwrap()
+            }
+
+            pub fn [<get_ $name _layer_mut>](&mut self) -> &mut Layer {
+                self.layers.get_mut($id).unwrap()
+            }
         }
-    }
+    };
 }

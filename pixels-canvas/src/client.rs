@@ -1,81 +1,90 @@
-use pixels_util::color::Color;
-use std::io::Read;
-use ureq::serde_json::{self, json};
+use ureq::serde_json::{
+    self,
+    json
+};
 
-use crate::prelude::CanvasError;
+use std::io::Read;
+
+use pixels_util::prelude::*;
+
+use crate::{
+    token,
+    url,
+};
+
 
 pub struct Client {
-    token: String,
+    token: String
 }
+
+pub type ClientError = ureq::Error;
 
 impl Client {
     pub fn new() -> Self {
         Client {
-            token: String::new(),
+            token: String::new()
         }
     }
 
-    pub fn auth(&mut self, refresh: String) -> Result<(), CanvasError> {
-        let body: serde_json::Value =
-            ureq::post("https://pixels.yazilimcilarinmolayeri.com/authenticate")
-                .send_json(json!({
-                    "refresh_token": refresh,
-                }))
-                .map_err(|_| CanvasError::ClientError)?
-                .into_json()
-                .map_err(|_| CanvasError::ClientError)?;
+    pub fn auth(&mut self, refresh: String) -> Result<(), ClientError> {
+        let body: serde_json::Value = ureq::post(url!("authenticate"))
+            .send_json(json!({
+                "refresh_token": refresh,
+            }))?.into_json()?;
         self.token = String::from(body["access_token"].as_str().unwrap());
         Ok(())
     }
 
-    pub fn canvas_size(&self) -> Result<(u64, u64), CanvasError> {
-        let body: serde_json::Value =
-            ureq::get("https://pixels.yazilimcilarinmolayeri.com/canvas/size")
-                .call()
-                .map_err(|_| CanvasError::ClientError)?
-                .into_json()
-                .map_err(|_| CanvasError::ClientError)?;
+    pub fn canvas_size(&self) -> Result<(u32, u32), ClientError> {
+        let body: serde_json::Value = ureq::get(url!("canvas/size"))
+            .call()?.into_json()?;
         Ok((
-            body["width"].as_u64().unwrap(),
-            body["height"].as_u64().unwrap(),
+            body["width"].as_u64().unwrap() as u32,
+            body["height"].as_u64().unwrap() as u32,
         ))
     }
 
-    pub fn canvas_pixels(&self) -> Result<Vec<u8>, CanvasError> {
+    pub fn canvas_pixels(&self) -> Result<Vec<u8>, ClientError> {
         let mut buffer: Vec<u8> = vec![];
-        ureq::get("https://pixels.yazilimcilarinmolayeri.com/canvas/pixels")
+        ureq::get(url!("canvas/pixels"))
             .set(
                 "Authorization",
-                format!("Bearer {}", self.token.clone()).as_str(),
+                token!(self.token),
             )
-            .call()
-            .map_err(|_| CanvasError::ClientError)?
+            .call()?
             .into_reader()
-            .read_to_end(&mut buffer)
-            .map_err(|_| CanvasError::ClientError)?;
+            .read_to_end(&mut buffer)?;
         Ok(buffer)
     }
 
-    pub fn canvas_set_pixel(
-        &self,
-        x: usize,
-        y: usize,
-        color: Color,
-    ) -> Result<(u32, f32), CanvasError> {
-        let res = ureq::put("https://pixels.yazilimcilarinmolayeri.com/canvas/pixel")
+    pub fn canvas_set_pixel(&self, x: u32, y: u32, color: Color) -> Result<(u32, f32), ClientError> {
+        let res = ureq::put(url!("canvas/pixel"))
             .set(
                 "Authorization",
-                format!("Bearer {}", self.token.clone()).as_str(),
+                token!(self.token),
             )
             .send_json(json!({
                 "x": x,
                 "y": y,
-                "rgb": color.to_string()
-            }))
-            .map_err(|_| CanvasError::ClientError)?;
+                "rgb": color.to_hex(ColorMode::RGB),
+            }))?;
         Ok((
             res.header("requests-remaining").unwrap().parse().unwrap(),
             res.header("requests-reset").unwrap().parse().unwrap(),
         ))
     }
+}
+
+#[macro_export]
+macro_rules! url {
+    ($path:expr) => {
+        format!("https://pixels.yazilimcilarinmolayeri.com/{}", $path).as_str()
+    };
+}
+
+#[macro_export]
+macro_rules! token {
+    ($token:expr) => {
+        format!("Bearer {}", $token.clone()).as_str()
+    };
 }
