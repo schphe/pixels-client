@@ -40,8 +40,8 @@ pub struct MenuState {
 pub enum ToolState {
     Draw,
     Move,
-    ColorPick,
-    PlaceImage,
+    Pick,
+    Place,
 }
 
 impl Default for State {
@@ -102,10 +102,10 @@ impl Display for ToolState {
             Self::Move => {
                 write!(f, "Move Tool")
             }
-            Self::ColorPick => {
+            Self::Pick => {
                 write!(f, "Color Picker")
             }
-            Self::PlaceImage => {
+            Self::Place => {
                 write!(f, "Image Placer")
             }
         }
