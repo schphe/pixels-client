@@ -154,7 +154,9 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
         state.selected_tool = ToolState::ColorPick;
     }
 
-    if is_mouse_button_pressed(MouseButton::Left) {
+    if is_mouse_button_pressed(MouseButton::Middle){
+        state.move_origin = pos;
+    } else if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos;
 
         match state.selected_tool {
