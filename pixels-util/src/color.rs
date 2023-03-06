@@ -118,21 +118,21 @@ from!([f32; 4], Color, |value: [f32; 4]| {
     Color::new(value[0], value[1], value[2], value[3])
 });
 
-into!(Color, [u8; 3], |value: Color| {
+from!(Color, [u8; 3], |value: Color| {
     let color = value.to_rgb();
     [color.0, color.1, color.2]
 });
 
-into!(Color, [u8; 4], |value: Color| {
+from!(Color, [u8; 4], |value: Color| {
     let color = value.to_rgba();
     [color.0, color.1, color.2, color.3]
 });
 
-into!(Color, [f32; 3], |value: Color| {
+from!(Color, [f32; 3], |value: Color| {
     [value.r, value.g, value.b]
 });
 
-into!(Color, [f32; 4], |value: Color| {
+from!(Color, [f32; 4], |value: Color| {
     [value.r, value.g, value.b, value.a]
 });
 
