@@ -34,6 +34,7 @@ enum ToolState {
     Draw,
     Move,
     ColorPick,
+    PlaceImage,
 }
 
 #[derive(Resource)]
@@ -157,7 +158,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
         state.selected_tool = ToolState::ColorPick;
     }
 
-    if is_mouse_button_pressed(MouseButton::Middle) {
+    if is_key_down(KeyCode::P) {
         state.move_origin = pos;
         let path = FileDialog::new()
             .set_location("~/Desktop")
@@ -169,7 +170,9 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
             container.canvas.get_mut_layers()[1]
                 .add_layer_element((pos.x as u64, pos.y as u64), image);
         }
-    } else if is_mouse_button_pressed(MouseButton::Left) {
+    }
+
+    if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos;
 
         match state.selected_tool {
@@ -198,6 +201,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                 .try_into()
                 .expect("Expected RGB found RGBA")
             }
+            ToolState::PlaceImage => {}
         }
     } else if is_mouse_button_down(MouseButton::Middle)
         ^ (is_mouse_button_down(MouseButton::Left) && ToolState::Move == state.selected_tool)
@@ -246,6 +250,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
                     state.selected_tool = ToolState::ColorPick;
                 }
                 if ui.add(egui::Button::new("add image")).clicked() {
+                    state.selected_tool = ToolState::PlaceImage;
                     state.image = state
                         .image
                         .is_none()
@@ -293,6 +298,9 @@ impl Display for ToolState {
             }
             Self::ColorPick => {
                 write!(f, "Color Picker")
+            }
+            Self::PlaceImage => {
+                write!(f, "Image Placer")
             }
         }
     }
