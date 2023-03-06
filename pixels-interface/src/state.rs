@@ -41,7 +41,7 @@ pub enum ToolType {
 }
 
 impl State {
-    pub(crate) fn new(image: Option<Image>) -> Self {
+    pub fn new(image: Option<Image>) -> Self {
         State {
             image,
             focus: false,
