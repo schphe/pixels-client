@@ -1,24 +1,20 @@
-use egui_macroquad::egui::{
-    self,
-    FontId,
-    RichText
-};
+use egui_macroquad::egui::{self, FontId, RichText};
 
 use bevy_ecs::prelude::*;
 use pixels_canvas::prelude::*;
 
-use super::{
-    ToolState,
-    State,
-};
+use super::{State, ToolState};
 
 use crate::add_tool_button;
 
-pub fn register_systems(_world: &mut World, _update_schedule: &mut Schedule, draw_schedule: &mut Schedule) {
+pub fn register_systems(
+    _world: &mut World,
+    _update_schedule: &mut Schedule,
+    draw_schedule: &mut Schedule,
+) {
     draw_schedule.add_stage(
         "draw_settings",
-        SystemStage::single_threaded()
-            .with_system(draw.after("canvas_draw"))
+        SystemStage::single_threaded().with_system(draw.after("canvas_draw")),
     );
 }
 

@@ -1,29 +1,35 @@
 use bevy_ecs::schedule::ShouldRun;
 use egui_macroquad::egui::Pos2;
-use native_dialog::FileDialog;
 
-use pixels_canvas::prelude::*;
-use macroquad::prelude::*;
 use bevy_ecs::prelude::*;
+use macroquad::prelude::*;
+use pixels_canvas::prelude::*;
 
-use pixels_util::color::Color;
+use super::{CanvasContainer, State, ToolState};
 use pixels_canvas::image::Image;
-use super::{
-    CanvasContainer,
-    ToolState,
-    State,
-};
+use pixels_util::color::Color;
+use rfd::FileDialog;
 
-pub fn register_systems(_world: &mut World, update_schedule: &mut Schedule, _draw_schedule: &mut Schedule) {
+pub fn register_systems(
+    _world: &mut World,
+    update_schedule: &mut Schedule,
+    _draw_schedule: &mut Schedule,
+) {
     update_schedule.add_stage(
         "update_input",
         SystemStage::single_threaded()
-            .with_system(update_zoom).with_run_criteria(run_if_not_focus)
-            .with_system(update_mouse).with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_move).with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_draw).with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_pick).with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_place).with_run_criteria(run_if_not_focus)
+            .with_system(update_zoom)
+            .with_run_criteria(run_if_not_focus)
+            .with_system(update_mouse)
+            .with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_move)
+            .with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_draw)
+            .with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_pick)
+            .with_run_criteria(run_if_not_focus)
+            .with_system(update_tool_place)
+            .with_run_criteria(run_if_not_focus),
     );
 }
 
@@ -103,27 +109,27 @@ pub fn update_tool_pick(mut state: ResMut<State>, container: ResMut<CanvasContai
             .canvas
             .get_main_pixel(pos.x as usize, pos.y as usize)
             .unwrap_or(&Color::default()))
-            .try_into()
-            .expect("Expected RGB found RGBA")
+        .try_into()
+        .expect("Expected RGB found RGBA")
     }
 }
 
 pub fn update_tool_place(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
     if !is_key_down(KeyCode::P) {
-       return;
+        return;
     }
 
     let pos = super::mouse_world_pos(state.camera_state.instance);
 
     state.camera_state.move_origin = pos;
     let path = FileDialog::new()
-        .set_location("~/Desktop")
         .add_filter("PNG Image", &["png"])
         .add_filter("JPEG Image", &["jpg", "jpeg"])
-        .show_open_single_file();
-    if let Ok(Some(path)) = path {
+        .set_directory("~")
+        .pick_file();
+
+    if let Some(path) = path {
         let image = Image::new(path);
-        container.canvas.get_mut_layers()[1]
-            .add_layer_element((pos.x as u64, pos.y as u64), image);
+        container.canvas.get_mut_layers()[1].add_layer_element((pos.x as u64, pos.y as u64), image);
     }
 }
