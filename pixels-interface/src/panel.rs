@@ -3,22 +3,13 @@ use egui_macroquad::egui::{self, RichText};
 use bevy_ecs::prelude::*;
 use pixels_canvas::prelude::*;
 
-use super::{State, ToolState};
+use super::{State, ToolType};
 
 use crate::add_tool_button;
 
-pub fn register_systems(
-    _world: &mut World,
-    _update_schedule: &mut Schedule,
-    draw_schedule: &mut Schedule,
-) {
-    draw_schedule.add_stage(
-        "draw_settings",
-        SystemStage::single_threaded().with_system(draw.after("canvas_draw")),
-    );
-}
+pub fn draw(world: &mut World) {
+    let mut state = world.get_resource_mut::<State>().unwrap();
 
-pub fn draw(mut state: ResMut<State>) {
     egui_macroquad::ui(|ctx| {
         let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
             ui.vertical_centered(|ui| {
@@ -26,31 +17,29 @@ pub fn draw(mut state: ResMut<State>) {
                 ui.add_space(20.0);
                 ui.color_edit_button_rgb(&mut state.color);
                 ui.add_space(5.0);
-                add_tool_button!(ctx, ui, state, state.menu_state.move_icon, ToolState::Move, {
-                    state.selected_tool = ToolState::Move;
+                add_tool_button!(ctx, ui, state, state.menu_state.move_icon, ToolType::Mover, {
+                    state.selected_tool = ToolType::Mover;
                 });
                 ui.add_space(5.0);
-                add_tool_button!(ctx, ui, state, state.menu_state.brush_icon, ToolState::Draw, {
-                    state.selected_tool = ToolState::Draw;
+                add_tool_button!(ctx, ui, state, state.menu_state.brush_icon, ToolType::Brush, {
+                    state.selected_tool = ToolType::Brush;
                 });
                 ui.add_space(5.0);
-                add_tool_button!(ctx, ui, state, state.menu_state.picker_icon, ToolState::Pick, {
-                    state.selected_tool = ToolState::Pick;
+                add_tool_button!(ctx, ui, state, state.menu_state.picker_icon, ToolType::Picker, {
+                    state.selected_tool = ToolType::Picker;
                 });
                 ui.add_space(5.0);
-                add_tool_button!(ctx, ui, state, state.menu_state.image_icon, ToolState::Place, {
-                    state.selected_tool = ToolState::Place;
-                    state.image = state
-                        .image
-                        .is_none()
-                        .then(|| Image::new("./assets/happy-ferris.png"));
-                });
-                ui.add_space(5.0);
+                if state.image.is_some() {
+                    add_tool_button!(ctx, ui, state, state.menu_state.image_icon, ToolType::Placer, {
+                        state.selected_tool = ToolType::Placer;
+                    });
+                    ui.add_space(5.0);
+                }
                 ui.label(RichText::new(state.cooldown.round().to_string()).strong());
             });
         });
         state.focus = ctx.is_pointer_over_area();
-        state.menu_area = panel.response.rect;
+        state.menu_state.area = panel.response.rect;
     });
 
     egui_macroquad::draw();

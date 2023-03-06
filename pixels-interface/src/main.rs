@@ -1,12 +1,19 @@
 use bevy_time::Time;
 use clap::Parser;
 
+use rfd::{
+    FileDialog,
+    MessageDialog,
+    MessageButtons
+};
+
 use bevy_ecs::prelude::*;
 use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
 use canvas::CanvasContainer;
-use state::{State, ToolState};
+use state::{State, ToolType};
+use pixels_canvas::image::Image;
 
 mod canvas;
 mod input;
@@ -25,9 +32,16 @@ struct App {
     update_schedule: Schedule,
 }
 
-#[macroquad::main("Pixels Client")]
-async fn main() {
-    let mut app = App::new(Args::parse(), State::default());
+fn main() {
+    let path = get_image_path();
+    macroquad::Window::new("Pixels Client", entry(path));
+}
+
+async fn entry(image: Option<Image>) {
+    let mut app = App::new(
+        Args::parse(),
+        State::new(image)
+    );
 
     loop {
         app.update();
@@ -49,21 +63,21 @@ impl App {
         state.camera_state.position = calculate_center(&canvas);
 
         let mut draw_schedule = Schedule::default();
-        draw_schedule.add_stage("draw", SystemStage::single_threaded());
-
         let mut update_schedule = Schedule::default();
-        update_schedule.add_stage(
-            "update",
-            SystemStage::parallel()
-                .with_system(update_time)
-                .with_system(update_camera)
+
+        update_schedule.add_systems((
+            update_time,
+            update_camera
+        ));
+
+        canvas::register_systems(
+            canvas,
+            &mut world,
+            &mut update_schedule,
+            &mut draw_schedule,
         );
+        input::register_systems(&mut update_schedule);
 
-        canvas::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
-        input::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
-        panel::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
-
-        world.insert_resource(CanvasContainer::new(canvas));
         world.insert_resource(Time::default());
         world.insert_resource(state);
 
@@ -81,6 +95,7 @@ impl App {
     fn draw(&mut self) {
         clear_background(DARKGRAY);
         self.draw_schedule.run(&mut self.world);
+        panel::draw(&mut self.world);
     }
 }
 
@@ -110,4 +125,21 @@ pub fn calculate_center(canvas: &Canvas) -> Vec2 {
 
 pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {
     camera.screen_to_world(vec2(mouse_position().0, mouse_position().1))
+}
+
+fn get_image_path() -> Option<Image> {
+    let select = MessageDialog::new()
+        .set_buttons(MessageButtons::YesNo)
+        .set_description("would you like to select an image to paste?")
+        .show();
+    if !select {
+        return None
+    }
+
+    let path = FileDialog::new()
+        .add_filter("PNG Image", &["png"])
+        .add_filter("JPEG Image", &["jpg", "jpeg"])
+        .set_directory("~")
+        .pick_file();
+    path.map(|p| Image::new(p))
 }

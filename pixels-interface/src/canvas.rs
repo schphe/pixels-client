@@ -7,6 +7,7 @@ use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
 use pixels_util::color::Color;
+use crate::state::ToolType;
 
 use super::State;
 
@@ -33,24 +34,22 @@ impl CanvasTimer {
 }
 
 pub fn register_systems(
+    canvas: Canvas,
     world: &mut World,
-    _update_schedule: &mut Schedule,
+    update_schedule: &mut Schedule,
     draw_schedule: &mut Schedule,
 ) {
-    draw_schedule.add_stage(
-        "draw_canvas",
-        SystemStage::single_threaded()
-            .with_system(draw.label("canvas_draw"))
-            .with_system(draw_image),
-    );
+    draw_schedule.add_systems((
+        draw,
+        draw_image
+    ));
 
-    draw_schedule.add_stage(
-        "update_canvas",
-        SystemStage::single_threaded()
-            .with_system(update_cooldown)
-            .with_system(update),
-    );
+    update_schedule.add_systems((
+        update_cooldown,
+        update
+    ));
 
+    world.insert_resource(CanvasContainer::new(canvas));
     world.insert_resource(CanvasTimer::new(Timer::new(
         Duration::from_secs(5),
         TimerMode::Repeating,
@@ -105,6 +104,11 @@ pub fn draw(state: Res<State>, container: Res<CanvasContainer>) {
 
 pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
     let pos = super::mouse_world_pos(state.camera_state.instance);
+
+    if state.selected_tool != ToolType::Placer {
+        return;
+    }
+
     if let Some(image) = &state.image {
         container
             .canvas
