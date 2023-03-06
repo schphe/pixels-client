@@ -9,7 +9,7 @@ use egui_macroquad::egui::Pos2;
 use egui_macroquad::egui::{self, FontId, RichText};
 use macroquad::prelude::*;
 
-use pixels_canvas::prelude::*;
+use pixels_canvas::{prelude::*, image::Image};
 
 use canvas::{CanvasContainer, CanvasTimer};
 use pixels_util::color::Color;
@@ -37,6 +37,7 @@ enum ToolState {
 
 #[derive(Resource)]
 pub struct State {
+    image: Option<Image>,
     cooldown: f32,
     zoom: f32,
     focus: bool,
@@ -83,7 +84,8 @@ impl App {
                 .with_system(update_input)
                 .with_system(update_camera)
                 .with_system(canvas::update)
-                .with_system(update_cooldown),
+                .with_system(update_cooldown)
+                .with_system(draw_image),
         );
 
         world.insert_resource(CanvasContainer::new(canvas));
@@ -109,6 +111,13 @@ impl App {
     fn draw(&mut self) {
         clear_background(DARKGRAY);
         self.draw_schedule.run(&mut self.world);
+    }
+}
+
+pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>){
+    let pos = mouse_world_pos(state.camera);
+    if let Some(image) = &state.image{
+        container.canvas.replace_part_with_image(pos.x as usize, pos.y as usize, image);
     }
 }
 
@@ -215,6 +224,9 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 if ui.add(egui::Button::new("color picker")).clicked() {
                     state.selected_tool = ToolState::ColorPick;
                 }
+                if ui.add(egui::Button::new("add image")).clicked() {
+                    state.image = Some(Image::new("happy-ferris.png"));
+                }
             });
             ui.add_space(ui.available_height() - 20.0);
             ui.horizontal(|ui| {
@@ -232,6 +244,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
 impl Default for State {
     fn default() -> Self {
         State {
+            image: None,
             cooldown: 0.0,
             zoom: 3.0,
             focus: false,
