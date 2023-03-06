@@ -78,7 +78,13 @@ impl Client {
 #[macro_export]
 macro_rules! url {
     ($path:expr) => {
-        format!("https://pixels.yazilimcilarinmolayeri.com/{}", $path).as_str()
+        format!(
+            "{}/{}",
+            std::option_env!("PIXELS_BASE_URL")
+                .unwrap_or("https://pixels.yazilimcilarinmolayeri.com"),
+            $path
+        )
+        .as_str()
     };
 }
 

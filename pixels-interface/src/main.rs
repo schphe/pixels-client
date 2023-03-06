@@ -130,6 +130,10 @@ pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {
 }
 
 fn get_element() -> Option<Element> {
+    if std::env::var("PIXELS_SKIP_IMAGE").is_ok() {
+        return None;
+    }
+
     let select = MessageDialog::new()
         .set_buttons(MessageButtons::YesNo)
         .set_description("would you like to select an image to paste?")

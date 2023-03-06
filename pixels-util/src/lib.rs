@@ -16,25 +16,12 @@ pub mod prelude {
     };
 }
 
-
-
 #[macro_export]
 macro_rules! from {
-    ($from:ty, $to:ident, $body:expr $(,)?) => {
+    ($from:ty, $to:ty, $body:expr $(,)?) => {
         impl From<$from> for $to {
             fn from(value: $from) -> Self {
                 $body(value)
-            }
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! into {
-    ($from:ident, $to:ty, $body:expr $(,)?) => {
-        impl Into<$to> for $from {
-            fn into(self) -> $to {
-                $body(self)
             }
         }
     };
