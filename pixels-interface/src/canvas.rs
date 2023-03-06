@@ -46,7 +46,7 @@ pub fn register_systems(
 
     update_schedule.add_systems((
         update_cooldown,
-        update
+        update.run_if(not(is_cooldown)),
     ));
 
     world.insert_resource(CanvasContainer::new(canvas));
@@ -54,6 +54,10 @@ pub fn register_systems(
         Duration::from_secs(5),
         TimerMode::Repeating,
     )));
+}
+
+fn is_cooldown(state: Res<State>) -> bool {
+    state.cooldown != 0.0
 }
 
 pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>) {
