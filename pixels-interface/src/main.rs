@@ -42,7 +42,10 @@ impl App {
         let canvas = Canvas::new(args.refresh);
         let mut world = World::new();
 
-        request_new_screen_size((canvas.width() * 2) as f32, (canvas.height() * 2) as f32);
+        request_new_screen_size(
+            (canvas.width() * 2) as f32,
+            (canvas.height() * 2) as f32
+        );
         state.camera_state.position = calculate_center(&canvas);
 
         let mut draw_schedule = Schedule::default();
@@ -53,7 +56,7 @@ impl App {
             "update",
             SystemStage::parallel()
                 .with_system(update_time)
-                .with_system(update_camera),
+                .with_system(update_camera)
         );
 
         canvas::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
