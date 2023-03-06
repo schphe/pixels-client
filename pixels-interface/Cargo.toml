@@ -1,6 +1,6 @@
 [package]
 name = "pixels-interface"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 
 [dependencies]
@@ -12,3 +12,4 @@ egui-macroquad = "0.15.0"
 macroquad = "0.3.25"
 bevy_time = "0.9.1"
 bevy_ecs = "0.9.1"
+native-dialog = "0.6.3"
