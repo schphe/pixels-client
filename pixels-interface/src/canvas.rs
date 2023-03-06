@@ -91,7 +91,7 @@ pub fn draw(state: Res<State>, container: Res<CanvasContainer>) {
                         x_pos as f32,
                         y_pos as f32,
                         1.0, 1.0,
-                        convert_color(if state.cooldown != 0.0 {
+                        convert_color(if state.cooldown == 0.0 {
                             x_pixel.clone()
                         } else {
                             dim_color(x_pixel)
