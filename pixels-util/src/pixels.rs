@@ -63,8 +63,12 @@ impl Pixels {
     }
 
     pub fn set(&mut self, x: u32, y: u32, color: Color) {
-        if let Some(list) = self.data.get_mut(y as usize) {
-            list[x as usize] = color
+        if let Some(item) = self.data
+            .get_mut(y as usize)
+            .and_then(|list| {
+                list.get_mut(x as usize)
+            }) {
+            *item = color;
         }
     }
 
