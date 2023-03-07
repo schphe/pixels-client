@@ -11,9 +11,8 @@ pub struct State {
     pub focus: bool,
     pub color: [f32; 3],
     pub cooldown: f32,
-    pub menu_area: Rect,
     pub image: Option<Image>,
-    pub selected_tool: ToolState,
+    pub selected_tool: ToolType,
     pub camera_state: CameraState,
     pub menu_state: MenuState,
 }
@@ -26,6 +25,7 @@ pub struct CameraState {
 }
 
 pub struct MenuState {
+    pub area: Rect,
     pub move_icon: RetainedImage,
     pub brush_icon: RetainedImage,
     pub image_icon: RetainedImage,
@@ -33,22 +33,21 @@ pub struct MenuState {
 }
 
 #[derive(PartialEq, Eq, Debug)]
-pub enum ToolState {
-    Draw,
-    Move,
-    Pick,
-    Place,
+pub enum ToolType {
+    Mover,
+    Brush,
+    Picker,
+    Placer,
 }
 
-impl Default for State {
-    fn default() -> Self {
+impl State {
+    pub(crate) fn new(image: Option<Image>) -> Self {
         State {
+            image,
             focus: false,
             color: [1.0; 3],
             cooldown: 0.0,
-            image: None,
-            menu_area: Rect::NOTHING,
-            selected_tool: ToolState::Move,
+            selected_tool: ToolType::Mover,
             camera_state: CameraState::default(),
             menu_state: MenuState::default(),
         }
@@ -69,6 +68,7 @@ impl Default for CameraState {
 impl Default for MenuState {
     fn default() -> Self {
         MenuState {
+            area: Rect::NOTHING,
             move_icon: RetainedImage::from_image_bytes(
                 "move_icon",
                 include_bytes!("../../assets/tool-move.png"),
