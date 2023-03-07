@@ -98,7 +98,7 @@ pub fn update_tool_pick(mut state: ResMut<State>, container: ResMut<CanvasContai
     }
 }
 
-pub fn update_tool_place(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
+pub fn update_tool_place(mut state: ResMut<State>, mut _container: ResMut<CanvasContainer>) {
     if is_key_down(KeyCode::P) {
         state.selected_tool = ToolType::Placer;
     }
