@@ -1,91 +1,73 @@
-use pixels_util::color::Color;
+use pixels_util::prelude::*;
 
-use crate::image::{ColorMode, Image};
+use crate::prelude::Element;
 
 pub struct Layer {
-    elements: Vec<LayerElement>,
-    //Size may not be necessary
-    size: (u64, u64),
-}
-
-impl From<Image> for Layer {
-    fn from(value: Image) -> Self {
-        let size = (value.width(), value.height());
-        let layer_element = LayerElement {
-            position: (0, 0),
-            image: value,
-        };
-        Layer {
-            elements: vec![layer_element],
-            size,
-        }
-    }
+    pixels: Pixels,
+    opacity: f32
 }
 
 impl Layer {
-    pub fn new(size: (u64, u64)) -> Self {
-        Layer {
-            elements: Vec::new(),
-            size,
+    pub fn new(size: (u32, u32), opacity: f32) -> Layer {
+        Self {
+            pixels: Pixels::new(size),
+            opacity,
         }
     }
 
-    pub fn get_size(&self) -> (u64, u64) {
-        self.size
+    pub fn from_vec(size: (u32, u32), buffer: Vec<u8>, opacity: f32) -> Self {
+        Self::from_pixels(
+            Pixels::from_buffer(
+                size, buffer, ColorMode::RGB
+            ),
+            opacity
+        )
     }
 
-    pub fn get_mut_layer_element(&mut self, idx: usize) -> Option<&mut LayerElement> {
-        self.elements.get_mut(idx)
+    pub fn from_pixels(pixels: Pixels, opacity: f32) -> Self {
+        Self {
+            pixels,
+            opacity,
+        }
     }
 
-    pub fn get_layer_element(&self, idx: usize) -> Option<&LayerElement> {
-        self.elements.get(idx)
+    pub fn get_opacity(&self) -> u8 {
+        (self.opacity * 255.0) as u8
     }
 
-    pub fn add_layer_element(&mut self, position: (u64, u64), image: Image) {
-        self.elements.push(LayerElement::new(position, image))
+    pub fn get_pixel(&self, x: u32, y: u32) -> Option<Color> {
+        self.pixels.get(x, y)
     }
 
-    pub fn get_layer_elements(&self) -> &Vec<LayerElement> {
-        &self.elements
-    }
-}
-
-pub struct LayerElement {
-    position: (u64, u64),
-    image: Image,
-}
-
-impl LayerElement {
-    pub fn new(position: (u64, u64), image: Image) -> Self {
-        LayerElement { position, image }
+    pub fn set_pixel(&mut self, x: u32, y: u32, color: Color) {
+        self.pixels.set(x, y, color)
     }
 
-    pub fn set_raw_data(&mut self, raw_data: Vec<u8>, size: (u64, u64)) {
-        self.image = Image::from_vec(raw_data, size, ColorMode::RGB);
+    pub fn set_pixels(&mut self, pixels: Pixels) {
+        self.pixels = pixels
     }
 
-    pub fn set_data(&mut self, image: Image) {
-        self.image = image;
+    pub fn draw(&mut self, element: Element) {
+        for ((x, y), color) in element.iter() {
+            let pos = element.get_position();
+            self.pixels.set(x + pos.0, y + pos.1, color);
+        }
     }
 
-    pub fn get_pixel(&self, x: usize, y: usize) -> Option<&Color> {
-        self.image.get_pixel_color(x, y)
+    pub fn overlay(&self, other: &Layer) -> Layer {
+        Self::from_pixels(
+            self.pixels.overlay(
+                &other.pixels, other.opacity
+            ),
+            self.opacity
+        )
     }
 
-    pub fn get_mut_pixel(&mut self, x: usize, y: usize) -> Option<&mut Color> {
-        self.image.get_mut_pixel_color(x, y)
+    pub fn clean(&mut self) {
+        self.pixels = Pixels::new(self.pixels.size())
     }
 
-    pub fn get_pixels(&self) -> &Vec<Vec<Color>> {
-        self.image.get_pixels()
-    }
-
-    pub fn get_position(&self) -> (u64, u64) {
-        self.position
-    }
-
-    pub fn set_position(&mut self, position: (u64, u64)) {
-        self.position = position;
+    pub fn iter(&self) -> PixelsIterator {
+        self.pixels.iter()
     }
 }

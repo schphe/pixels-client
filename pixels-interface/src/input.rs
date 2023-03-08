@@ -60,17 +60,17 @@ pub fn update_tool_draw(mut state: ResMut<State>, mut container: ResMut<CanvasCo
     if let ToolType::Brush = state.selected_tool {
         let pos = super::mouse_world_pos(state.camera_state.instance);
 
-        if let Err(e) = container.canvas.set_main_pixel(
-            pos.x as usize,
-            pos.y as usize,
+        if let Err(e) = container.canvas.set_pixel(
+            pos.x as u32,
+            pos.y as u32,
             Color::from(state.color),
         ) {
             match e {
-                CanvasError::ClientError => {
+                CanvasError::Client(_e) => {
                     panic!("couldn't set pixel");
                 }
                 CanvasError::Cooldown(cooldown) => {
-                    println!("please wait cooldown to end: {}", cooldown.remaining());
+                    println!("please wait cooldown to end: {}", cooldown);
                 }
             }
         }
@@ -89,10 +89,10 @@ pub fn update_tool_pick(mut state: ResMut<State>, container: ResMut<CanvasContai
     if let ToolType::Picker = state.selected_tool {
         let pos = super::mouse_world_pos(state.camera_state.instance);
 
-        state.color = (*container
+        state.color = (container
             .canvas
-            .get_main_pixel(pos.x as usize, pos.y as usize)
-            .unwrap_or(&Color::default()))
+            .get_pixel(pos.x as u32, pos.y as u32)
+            .unwrap_or(Color::default()))
         .try_into()
         .expect("Expected RGB found RGBA")
     }

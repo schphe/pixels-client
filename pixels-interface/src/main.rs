@@ -12,8 +12,10 @@ use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
 use canvas::CanvasContainer;
-use state::{State, ToolType};
-use pixels_canvas::image::Image;
+use state::{
+    State,
+    ToolType
+};
 
 mod canvas;
 mod input;
@@ -33,11 +35,11 @@ struct App {
 }
 
 fn main() {
-    let path = get_image_path();
-    macroquad::Window::new("Pixels Client", entry(path));
+    let element = get_element();
+    macroquad::Window::new("Pixels Client", entry(element));
 }
 
-async fn entry(image: Option<Image>) {
+async fn entry(image: Option<Element>) {
     let mut app = App::new(
         Args::parse(),
         State::new(image)
@@ -53,7 +55,7 @@ async fn entry(image: Option<Image>) {
 
 impl App {
     fn new(args: Args, mut state: State) -> Self {
-        let canvas = Canvas::new(args.refresh);
+        let canvas = Canvas::new(args.refresh).expect("couldn't create canvas");
         let mut world = World::new();
 
         request_new_screen_size(
@@ -127,7 +129,7 @@ pub fn mouse_world_pos(camera: Camera2D) -> Vec2 {
     camera.screen_to_world(vec2(mouse_position().0, mouse_position().1))
 }
 
-fn get_image_path() -> Option<Image> {
+fn get_element() -> Option<Element> {
     let select = MessageDialog::new()
         .set_buttons(MessageButtons::YesNo)
         .set_description("would you like to select an image to paste?")
@@ -141,5 +143,5 @@ fn get_image_path() -> Option<Image> {
         .add_filter("JPEG Image", &["jpg", "jpeg"])
         .set_directory("~")
         .pick_file();
-    path.map(|p| Image::new(p))
+    path.map(|p| Element::new(p))
 }

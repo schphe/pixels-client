@@ -1,7 +1,11 @@
-use pixels_util::cooldown::Cooldown;
-
 #[derive(Debug)]
 pub enum CanvasError {
-    ClientError,
-    Cooldown(Cooldown),
+    Client(ureq::Error),
+    Cooldown(f32),
+}
+
+impl From<ureq::Error> for CanvasError {
+    fn from(value: ureq::Error) -> Self {
+        Self::Client(value)
+    }
 }
