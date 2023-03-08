@@ -39,8 +39,8 @@ impl Pixels {
 
         Self::from_buffer(
             image.dimensions(),
-            image.into_bytes(),
-            ColorMode::RGBA
+            image.clone().into_bytes(),
+            ColorMode::from(image.color()).expect("unsupported format")
         )
     }
 

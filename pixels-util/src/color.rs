@@ -1,3 +1,5 @@
+use image::ColorType;
+
 use crate::{
     from, into,
     normalize_color,
@@ -8,15 +10,6 @@ use crate::{
 pub enum ColorMode {
     RGBA,
     RGB
-}
-
-impl ColorMode {
-    pub fn size(&self) -> usize {
-        match self {
-            ColorMode::RGBA => 4,
-            ColorMode::RGB => 3,
-        }
-    }
 }
 
 #[derive(Copy, Clone, Default)]
@@ -142,6 +135,29 @@ into!(Color, [f32; 3], |value: Color| {
 into!(Color, [f32; 4], |value: Color| {
     [value.r, value.g, value.b, value.a]
 });
+
+impl ColorMode {
+    pub fn from(format: ColorType) -> Option<Self> {
+        match format {
+            ColorType::Rgb8 | ColorType::Rgb16 | ColorType::Rgb32F => {
+                Some(ColorMode::RGB)
+            },
+            ColorType::Rgba8 | ColorType::Rgba16 | ColorType::Rgba32F => {
+                Some(ColorMode::RGBA)
+            }
+            _ => {
+                None
+            }
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        match self {
+            ColorMode::RGBA => 4,
+            ColorMode::RGB => 3,
+        }
+    }
+}
 
 #[macro_export]
 macro_rules! normalize_color {
